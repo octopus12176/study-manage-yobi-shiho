@@ -262,3 +262,65 @@ export const buildWeekDates = (baseDate: Date = new Date()): string[] => {
     return format(d, 'yyyy-MM-dd');
   });
 };
+
+// ────────────── ESSAY TEMPLATES ──────────────
+
+export type EssayTemplateRow = Database['public']['Tables']['essay_templates']['Row'];
+
+export const listEssayTemplates = async (): Promise<EssayTemplateRow[]> => {
+  const user = await getUserOrThrow();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('essay_templates')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
+
+export const createEssayTemplate = async (input: {
+  subject: string;
+  title: string;
+  template?: string | null;
+  norm?: string | null;
+  pitfall?: string | null;
+}): Promise<EssayTemplateRow> => {
+  const user = await getUserOrThrow();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('essay_templates')
+    // @ts-expect-error - Supabase type inference issue with generic parameters
+    .insert({
+      user_id: user.id,
+      subject: input.subject,
+      title: input.title,
+      template: input.template || null,
+      norm: input.norm || null,
+      pitfall: input.pitfall || null,
+    })
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error('Failed to create essay template');
+  }
+
+  return data;
+};
+
+export const deleteEssayTemplate = async (id: string): Promise<void> => {
+  const user = await getUserOrThrow();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('essay_templates')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) throw error;
+};

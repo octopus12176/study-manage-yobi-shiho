@@ -84,6 +84,29 @@ export type Database = {
         };
         Update: Partial<Database['public']['Tables']['pomodoro_runs']['Insert']>;
       };
+      essay_templates: {
+        Row: {
+          id: string;
+          user_id: string;
+          subject: string;
+          title: string;
+          template: string | null;
+          norm: string | null;
+          pitfall: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          subject: string;
+          title: string;
+          template?: string | null;
+          norm?: string | null;
+          pitfall?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['essay_templates']['Insert']>;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
