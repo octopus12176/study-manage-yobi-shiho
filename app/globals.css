@@ -347,3 +347,44 @@ body {
     display: none !important;
   }
 }
+
+/* リッチテキスト表示スタイル（TipTap HTML レンダリング用） */
+.rich-text-content {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.rich-text-content p {
+  margin-bottom: 0.5em;
+}
+
+.rich-text-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-text-content strong {
+  font-weight: 700;
+}
+
+.rich-text-content em {
+  font-style: italic;
+}
+
+.rich-text-content u {
+  text-decoration: underline;
+}
+
+/* TipTap エディター内スタイル（編集時） */
+.ProseMirror {
+  outline: none;
+  min-height: inherit;
+}
+
+.ProseMirror p {
+  margin-bottom: 0.5em;
+}
+
+.ProseMirror p:last-child {
+  margin-bottom: 0;
+}

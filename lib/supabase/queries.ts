@@ -314,6 +314,36 @@ export const createEssayTemplate = async (input: {
   return data;
 };
 
+export const updateEssayTemplate = async (
+  id: string,
+  input: {
+    subject?: string;
+    title?: string;
+    template?: string | null;
+    norm?: string | null;
+    pitfall?: string | null;
+    rank?: string;
+  }
+): Promise<EssayTemplateRow> => {
+  const user = await getUserOrThrow();
+  const supabase = await createClient();
+
+  // @ts-expect-error - Supabase type inference issue with generic parameters
+  const { data, error } = await supabase
+    .from('essay_templates')
+    .update(input)
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error('Failed to update essay template');
+  }
+
+  return data;
+};
+
 export const deleteEssayTemplate = async (id: string): Promise<void> => {
   const user = await getUserOrThrow();
   const supabase = await createClient();

@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { X, ChevronDown } from 'lucide-react';
+import { X, ChevronDown, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Chip } from '@/components/ui/chip';
-import { createEssayTemplateAction, deleteEssayTemplateAction } from '@/app/template/actions';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { createEssayTemplateAction, deleteEssayTemplateAction, updateEssayTemplateAction } from '@/app/template/actions';
 import { SUBJECTS } from '@/lib/constants';
 import type { EssayTemplateRow } from '@/lib/supabase/queries';
 
@@ -17,13 +17,34 @@ type EssayTemplateViewProps = {
 
 const ALL_SUBJECT = 'all';
 
+// ヘルパー関数: HTMLか plain text かを判別して表示
+function renderContent(content: string | null): React.ReactNode {
+  if (!content) return null;
+  // HTML タグで始まる場合はリッチテキストとしてレンダリング
+  const isHtml = content.trimStart().startsWith('<');
+  if (isHtml) {
+    return (
+      <div
+        className='rich-text-content rounded bg-white p-3 border border-border'
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
+  // plain text（既存データ）は whitespace-pre-wrap で表示
+  return (
+    <div className='whitespace-pre-wrap rounded bg-white p-3 text-sm text-text border border-border'>
+      {content}
+    </div>
+  );
+}
+
 export function EssayTemplateView({ templates: initialTemplates }: EssayTemplateViewProps) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [filterSubject, setFilterSubject] = useState(ALL_SUBJECT);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set());
 
-  // フォーム状態
+  // 追加モーダルのフォーム状態
   const [formData, setFormData] = useState<{
     subject: string;
     title: string;
@@ -42,6 +63,27 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  // 編集モーダル用 state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<EssayTemplateRow | null>(null);
+  const [editFormData, setEditFormData] = useState<{
+    subject: string;
+    title: string;
+    template: string;
+    norm: string;
+    pitfall: string;
+    rank: string;
+  }>({
+    subject: SUBJECTS[0] as string,
+    title: '',
+    template: '',
+    norm: '',
+    pitfall: '',
+    rank: 'C',
+  });
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [editSubmitError, setEditSubmitError] = useState('');
 
   // フィルタリング
   const filteredTemplates =
@@ -99,6 +141,46 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
       setSubmitError(error instanceof Error ? error.message : '保存に失敗しました。');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenEditModal = (template: EssayTemplateRow) => {
+    setEditingTemplate(template);
+    setEditFormData({
+      subject: template.subject,
+      title: template.title,
+      template: template.template ?? '',
+      norm: template.norm ?? '',
+      pitfall: template.pitfall ?? '',
+      rank: template.rank ?? 'C',
+    });
+    setEditSubmitError('');
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingTemplate(null);
+    setEditSubmitError('');
+  };
+
+  const handleUpdateTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTemplate) return;
+    setEditSubmitError('');
+    setIsEditSubmitting(true);
+
+    try {
+      const result = await updateEssayTemplateAction(editingTemplate.id, editFormData);
+      if (result.ok) {
+        window.location.reload();
+      } else {
+        setEditSubmitError(result.message || 'エラーが発生しました。');
+      }
+    } catch (error) {
+      setEditSubmitError(error instanceof Error ? error.message : '更新に失敗しました。');
+    } finally {
+      setIsEditSubmitting(false);
     }
   };
 
@@ -204,9 +286,7 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                         <div className='text-xs font-semibold uppercase tracking-wider text-sub mb-2'>
                           論点テンプレ（要件・フロー）
                         </div>
-                        <div className='whitespace-pre-wrap rounded bg-white p-3 text-sm text-text border border-border'>
-                          {template.template}
-                        </div>
+                        {renderContent(template.template)}
                       </div>
                     )}
 
@@ -215,9 +295,7 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                         <div className='text-xs font-semibold uppercase tracking-wider text-sub mb-2'>
                           自分の言葉での規範
                         </div>
-                        <div className='whitespace-pre-wrap rounded bg-white p-3 text-sm text-text border border-border'>
-                          {template.norm}
-                        </div>
+                        {renderContent(template.norm)}
                       </div>
                     )}
 
@@ -226,14 +304,20 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                         <div className='text-xs font-semibold uppercase tracking-wider text-sub mb-2'>
                           落とし穴・注意点
                         </div>
-                        <div className='whitespace-pre-wrap rounded bg-white p-3 text-sm text-text border border-border'>
-                          {template.pitfall}
-                        </div>
+                        {renderContent(template.pitfall)}
                       </div>
                     )}
 
-                    {/* 削除ボタン */}
-                    <div className='flex justify-end pt-2'>
+                    {/* 編集・削除ボタン */}
+                    <div className='flex justify-end gap-2 pt-2'>
+                      <Button
+                        variant='secondary'
+                        size='sm'
+                        onClick={() => handleOpenEditModal(template)}
+                      >
+                        <Pencil size={14} />
+                        編集
+                      </Button>
                       <Button
                         variant='ghost'
                         size='sm'
@@ -250,10 +334,10 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
         )}
       </div>
 
-      {/* モーダル */}
+      {/* 追加モーダル */}
       {isModalOpen && (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm'>
-          <div className='w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-2xl'>
+          <div className='w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto'>
             {/* モーダルヘッダー */}
             <div className='mb-6 flex items-center justify-between'>
               <h2 className='text-lg font-bold text-text'>論文テンプレを追加</h2>
@@ -329,45 +413,36 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
               {/* 論点テンプレ */}
               <div>
                 <Label htmlFor='template'>論点テンプレ（要件・フロー）</Label>
-                <Textarea
-                  id='template'
+                <RichTextEditor
                   value={formData.template}
-                  onChange={(e) =>
-                    setFormData({ ...formData, template: e.target.value })
-                  }
-                  placeholder='①〜であること&#10;②〜の要件を満たすこと'
-                  rows={4}
+                  onChange={(html) => setFormData({ ...formData, template: html })}
+                  placeholder='①〜であること\n②〜の要件を満たすこと'
                   className='mt-2'
+                  minHeight='96px'
                 />
               </div>
 
               {/* 自分の言葉での規範 */}
               <div>
                 <Label htmlFor='norm'>自分の言葉での規範</Label>
-                <Textarea
-                  id='norm'
+                <RichTextEditor
                   value={formData.norm}
-                  onChange={(e) =>
-                    setFormData({ ...formData, norm: e.target.value })
-                  }
+                  onChange={(html) => setFormData({ ...formData, norm: html })}
                   placeholder='自分の言葉で規範を書く（記憶・定着用）'
-                  rows={3}
                   className='mt-2'
+                  minHeight='80px'
                 />
               </div>
 
               {/* 落とし穴・注意点 */}
               <div>
                 <Label htmlFor='pitfall'>落とし穴・注意点</Label>
-                <Textarea
-                  id='pitfall'
+                <RichTextEditor
                   value={formData.pitfall}
-                  onChange={(e) =>
-                    setFormData({ ...formData, pitfall: e.target.value })
-                  }
+                  onChange={(html) => setFormData({ ...formData, pitfall: html })}
                   placeholder='試験でよく間違える点・例外etc.'
-                  rows={2}
                   className='mt-2'
+                  minHeight='64px'
                 />
               </div>
 
@@ -386,6 +461,138 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? '保存中...' : '保存する'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 編集モーダル */}
+      {isEditModalOpen && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm'>
+          <div className='w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto'>
+            {/* ヘッダー */}
+            <div className='mb-6 flex items-center justify-between'>
+              <h2 className='text-lg font-bold text-text'>論文テンプレを編集</h2>
+              <button
+                type='button'
+                onClick={handleCloseEditModal}
+                className='rounded-lg bg-bg p-2 transition-colors hover:bg-border'
+              >
+                <X size={18} className='text-sub' />
+              </button>
+            </div>
+
+            {editSubmitError && (
+              <div className='mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 border border-red-200'>
+                {editSubmitError}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateTemplate} className='space-y-4'>
+              {/* 科目・ランク（2カラム） */}
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <Label htmlFor='edit-subject'>科目</Label>
+                  <select
+                    id='edit-subject'
+                    value={editFormData.subject}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, subject: e.target.value })
+                    }
+                    className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20'
+                  >
+                    {SUBJECTS.map((subject) => (
+                      <option key={subject} value={subject}>
+                        {subject}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor='edit-rank'>ランク</Label>
+                  <select
+                    id='edit-rank'
+                    value={editFormData.rank}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, rank: e.target.value })
+                    }
+                    className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20'
+                  >
+                    <option value='A'>A - 最重要</option>
+                    <option value='B'>B - 重要</option>
+                    <option value='C'>C - 補助的</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 論点名 */}
+              <div>
+                <Label htmlFor='edit-title'>論点名</Label>
+                <Input
+                  id='edit-title'
+                  value={editFormData.title}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, title: e.target.value })
+                  }
+                  placeholder='例: 処分性の判断基準'
+                  className='mt-2'
+                />
+              </div>
+
+              {/* 論点テンプレ */}
+              <div>
+                <Label htmlFor='edit-template'>論点テンプレ（要件・フロー）</Label>
+                <RichTextEditor
+                  value={editFormData.template}
+                  onChange={(html) => setEditFormData({ ...editFormData, template: html })}
+                  placeholder='①〜であること\n②〜の要件を満たすこと'
+                  className='mt-2'
+                  minHeight='96px'
+                />
+              </div>
+
+              {/* 自分の言葉での規範 */}
+              <div>
+                <Label htmlFor='edit-norm'>自分の言葉での規範</Label>
+                <RichTextEditor
+                  value={editFormData.norm}
+                  onChange={(html) => setEditFormData({ ...editFormData, norm: html })}
+                  placeholder='自分の言葉で規範を書く（記憶・定着用）'
+                  className='mt-2'
+                  minHeight='80px'
+                />
+              </div>
+
+              {/* 落とし穴・注意点 */}
+              <div>
+                <Label htmlFor='edit-pitfall'>落とし穴・注意点</Label>
+                <RichTextEditor
+                  value={editFormData.pitfall}
+                  onChange={(html) => setEditFormData({ ...editFormData, pitfall: html })}
+                  placeholder='試験でよく間違える点・例外etc.'
+                  className='mt-2'
+                  minHeight='64px'
+                />
+              </div>
+
+              {/* フッターボタン */}
+              <div className='flex justify-end gap-3 border-t border-border pt-4'>
+                <Button
+                  type='button'
+                  variant='secondary'
+                  onClick={handleCloseEditModal}
+                  disabled={isEditSubmitting}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  type='submit'
+                  disabled={isEditSubmitting}
+                >
+                  {isEditSubmitting ? '更新中...' : '更新する'}
                 </Button>
               </div>
             </form>
