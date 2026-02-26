@@ -266,6 +266,51 @@ export function PlanView({ data }: PlanViewProps) {
             );
           })}
         </div>
+
+        <div className='card card-soft'>
+          <p className='mb-4 text-sm font-bold'>科目別の配分ガイド</p>
+          <div className='space-y-3'>
+            {Object.entries(data.planRatios.subjectRatios)
+              .sort((a, b) => b[1] - a[1])
+              .map(([subject, targetPct]) => {
+                const currentMinutes = data.subjectBreakdown[subject] ?? 0;
+                const currentPct = data.weeklyMinutes > 0 ? Math.round((currentMinutes / data.weeklyMinutes) * 100) : 0;
+                const gapPct = targetPct - currentPct;
+
+                return (
+                  <div key={subject} className='text-[12px]'>
+                    <div className='mb-1.5 flex items-center justify-between'>
+                      <span className='font-semibold text-text'>{subject}</span>
+                      <div className='flex gap-2'>
+                        <span className='text-sub'>現{currentPct}%</span>
+                        <span className='text-muted'>目{targetPct}%</span>
+                      </div>
+                    </div>
+                    <div className='flex gap-1.5'>
+                      <div className='flex-1 h-2 rounded-sm overflow-hidden bg-borderLight'>
+                        <div
+                          className='h-full transition-[width] duration-300'
+                          style={{
+                            width: `${Math.min(currentPct, 100)}%`,
+                            background: currentPct >= targetPct ? 'var(--success)' : 'var(--accent)',
+                          }}
+                        />
+                      </div>
+                      <div
+                        className='px-1.5 py-0.5 rounded-md text-[10px] font-bold'
+                        style={{
+                          background: gapPct > 0 ? 'var(--dangerLight)' : 'var(--successLight)',
+                          color: gapPct > 0 ? 'var(--danger)' : 'var(--success)',
+                        }}
+                      >
+                        {gapPct > 0 ? `+${gapPct}%` : `${gapPct}%`}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
       </div>
 
       <div className='grid grid-cols-[minmax(280px,1fr)_minmax(280px,1fr)] gap-4 max-lg:grid-cols-1'>
