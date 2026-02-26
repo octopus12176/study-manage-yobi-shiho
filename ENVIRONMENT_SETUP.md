@@ -38,15 +38,15 @@ supabase status
 
 出力例：
 ```
-service_role_key: eyJ...
-anon_key:        eyJ...
-API URL:         http://127.0.0.1:54321
-S3 URL:          http://127.0.0.1:54321/storage/v1/s3
+Project URL    │ http://127.0.0.1:54321
+Publishable    │ sb_publishable_<実際の値>
+Secret         │ sb_secret_<実際の値>
+S3 URL         │ http://127.0.0.1:54321/storage/v1/s3
 ```
 
 #### `.env.development.local` の設定
 
-出力された **API URL** と **anon_key** を `.env.development.local` に設定：
+出力された **Project URL** と **Publishable** キーを `.env.development.local` に設定：
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
