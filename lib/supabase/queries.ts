@@ -28,10 +28,12 @@ export const listStudySessionsInRange = async ({
   from,
   to,
   limit,
+  track,
 }: {
   from: string;
   to: string;
   limit?: number;
+  track?: string;
 }): Promise<StudySessionRow[]> => {
   const user = await getUserOrThrow();
   const supabase = await createClient();
@@ -43,6 +45,10 @@ export const listStudySessionsInRange = async ({
     .gte('started_at', from)
     .lte('ended_at', to)
     .order('started_at', { ascending: false });
+
+  if (track) {
+    query = query.eq('track', track);
+  }
 
   if (limit) {
     query = query.limit(limit);
