@@ -11,6 +11,7 @@ type UpdateWeeklyPlanInput = {
   weekdayHours: number;
   weekendHours: number;
   exerciseRatio: number;
+  focusedSubjectNames: string[];
 };
 
 export async function updateWeeklyPlanAction(input: UpdateWeeklyPlanInput) {
@@ -35,6 +36,7 @@ export async function updateWeeklyPlanAction(input: UpdateWeeklyPlanInput) {
         weekendHours: input.weekendHours,
         exerciseRatio: input.exerciseRatio,
         subjectRatios: DEFAULT_WEEKLY_PLAN.subjectRatios,
+        focusedSubjectNames: input.focusedSubjectNames,
       },
     });
 

@@ -159,7 +159,7 @@ export function DashboardView({ data }: DashboardViewProps) {
         <div className='card card-soft'>
           <div className='mb-3 flex items-center justify-between'>
             <p className='text-sm font-bold'>今日の重点科目</p>
-            <span className='font-mono text-[10px] tracking-[0.08em] text-sub'>AUTO PICK</span>
+            <span className='font-mono text-[10px] tracking-[0.08em] text-sub'>{data.isManualFocus ? 'MANUAL PICK' : 'AUTO PICK'}</span>
           </div>
           <div className='flex flex-col gap-2'>
             {data.focusSubjects.map((focus, idx) => (

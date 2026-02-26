@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react';
 import { updateWeeklyPlanAction } from '@/app/plan/actions';
 import { Button } from '@/components/ui/button';
 import { MiniBar } from '@/components/ui/minibar';
+import { SUBJECTS } from '@/lib/constants';
 import type { DashboardData } from '@/lib/dashboard';
 
 type PlanViewProps = {
@@ -17,6 +18,9 @@ export function PlanView({ data }: PlanViewProps) {
   const [weekdayHours, setWeekdayHours] = useState(data.planRatios.weekdayHours);
   const [weekendHours, setWeekendHours] = useState(data.planRatios.weekendHours);
   const [exerciseRatio, setExerciseRatio] = useState(data.planRatios.exerciseRatio);
+  const [focusedSubjectNames, setFocusedSubjectNames] = useState<string[]>(
+    data.planRatios.focusedSubjectNames || []
+  );
   const [message, setMessage] = useState('');
   const [isPending, startTransition] = useTransition();
 
@@ -40,6 +44,7 @@ export function PlanView({ data }: PlanViewProps) {
           weekdayHours,
           weekendHours,
           exerciseRatio,
+          focusedSubjectNames,
         });
         setMessage(result.message);
         // ページ再読み込みで確実に最新データを取得
@@ -52,6 +57,12 @@ export function PlanView({ data }: PlanViewProps) {
         setMessage(`更新に失敗しました: ${errorMessage}`);
       }
     });
+  };
+
+  const toggleSubject = (subject: string) => {
+    setFocusedSubjectNames((prev) =>
+      prev.includes(subject) ? prev.filter((s) => s !== subject) : [...prev, subject]
+    );
   };
 
   return (
@@ -174,6 +185,46 @@ export function PlanView({ data }: PlanViewProps) {
           <Button variant='accent' className='mt-4 w-full' onClick={submit} disabled={isPending}>
             {isPending ? '更新中...' : '週間計画を保存'}
           </Button>
+        </div>
+
+        <div className='card card-soft'>
+          <div className='mb-4 flex items-center justify-between'>
+            <div>
+              <p className='text-sm font-bold'>今週のフォーカス科目</p>
+              <p className='text-[11px] text-sub'>優先したい科目を選択（複数可）</p>
+            </div>
+            {focusedSubjectNames.length > 0 && (
+              <p className='text-xs font-bold text-accent'>{focusedSubjectNames.length}個選択</p>
+            )}
+          </div>
+          <div className='grid grid-cols-2 gap-2'>
+            {SUBJECTS.map((subject) => (
+              <button
+                key={subject}
+                onClick={() => toggleSubject(subject)}
+                className='rounded-lg border-2 px-3 py-2.5 text-sm font-semibold transition-colors'
+                style={{
+                  borderColor: focusedSubjectNames.includes(subject) ? 'var(--accent)' : 'var(--border)',
+                  backgroundColor: focusedSubjectNames.includes(subject) ? 'var(--accentLight)' : 'transparent',
+                  color: focusedSubjectNames.includes(subject) ? 'var(--accent)' : 'var(--text)',
+                }}
+              >
+                {subject}
+              </button>
+            ))}
+          </div>
+          {focusedSubjectNames.length > 0 && (
+            <div className='mt-3 flex flex-wrap gap-2'>
+              {focusedSubjectNames.map((subject) => (
+                <span
+                  key={subject}
+                  className='rounded-full bg-accentLight px-3 py-1 text-xs font-bold text-accent'
+                >
+                  {subject}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className='card card-soft'>

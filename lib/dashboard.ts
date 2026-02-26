@@ -10,6 +10,7 @@ type WeeklyPlanRatios = {
   weekendHours: number;
   exerciseRatio: number;
   subjectRatios: Record<string, number>;
+  focusedSubjectNames: string[];
 };
 
 type FocusSubject = {
@@ -49,6 +50,7 @@ export type DashboardData = {
   momentumPercent: number;
   coverageCount: number;
   focusSubjects: FocusSubject[];
+  isManualFocus: boolean;
   activityMix: ActivityMix[];
   ronbunCauseCounts: Array<{ category: string; count: number; pct: number }>;
 };
@@ -58,6 +60,7 @@ const fallbackPlanRatios: WeeklyPlanRatios = {
   weekendHours: DEFAULT_WEEKLY_PLAN.weekendHours,
   exerciseRatio: DEFAULT_WEEKLY_PLAN.exerciseRatio,
   subjectRatios: { ...DEFAULT_WEEKLY_PLAN.subjectRatios },
+  focusedSubjectNames: [],
 };
 
 const parsePlanRatios = (plan: WeeklyPlanRow): WeeklyPlanRatios => {
@@ -71,6 +74,10 @@ const parsePlanRatios = (plan: WeeklyPlanRow): WeeklyPlanRatios => {
     raw.subjectRatios && typeof raw.subjectRatios === 'object' && !Array.isArray(raw.subjectRatios)
       ? (raw.subjectRatios as Record<string, number>)
       : fallbackPlanRatios.subjectRatios;
+  const focusedSubjectNames =
+    Array.isArray(raw.focusedSubjectNames)
+      ? (raw.focusedSubjectNames as string[]).filter((s) => typeof s === 'string')
+      : [];
 
   return {
     weekdayHours:
@@ -80,6 +87,7 @@ const parsePlanRatios = (plan: WeeklyPlanRow): WeeklyPlanRatios => {
     exerciseRatio:
       typeof raw.exerciseRatio === 'number' ? raw.exerciseRatio : fallbackPlanRatios.exerciseRatio,
     subjectRatios,
+    focusedSubjectNames,
   };
 };
 
@@ -179,7 +187,7 @@ export const getDashboardData = async (): Promise<DashboardData> => {
     });
     const coverageCount = Object.values(subjectBreakdown).filter((minutes) => minutes > 0).length;
 
-    const focusSubjects = SUBJECTS.map((subject) => {
+    const allSubjectFocus = SUBJECTS.map((subject) => {
       const weeklyMinutesBySubject = subjectBreakdown[subject] ?? 0;
       const currentPct = weeklyMinutes > 0 ? Math.round((weeklyMinutesBySubject / weeklyMinutes) * 100) : 0;
       const targetPct = planRatios.subjectRatios[subject] ?? 0;
@@ -190,9 +198,15 @@ export const getDashboardData = async (): Promise<DashboardData> => {
         targetPct,
         gapPct: targetPct - currentPct,
       };
-    })
-      .sort((a, b) => b.gapPct - a.gapPct || a.weeklyMinutes - b.weeklyMinutes)
-      .slice(0, 3);
+    });
+
+    const focusSubjects = planRatios.focusedSubjectNames.length > 0
+      ? allSubjectFocus
+          .filter((s) => planRatios.focusedSubjectNames.includes(s.subject))
+          .sort((a, b) => b.gapPct - a.gapPct || a.weeklyMinutes - b.weeklyMinutes)
+      : allSubjectFocus
+          .sort((a, b) => b.gapPct - a.gapPct || a.weeklyMinutes - b.weeklyMinutes)
+          .slice(0, 3);
 
     const activityMinutes = new Map<string, number>();
     weekSessions.forEach((session) => {
@@ -276,6 +290,7 @@ export const getDashboardData = async (): Promise<DashboardData> => {
       momentumPercent,
       coverageCount,
       focusSubjects,
+      isManualFocus: planRatios.focusedSubjectNames.length > 0,
       activityMix,
       ronbunCauseCounts,
     };
@@ -322,6 +337,7 @@ export const getDashboardData = async (): Promise<DashboardData> => {
         targetPct: fallbackPlanRatios.subjectRatios[subject] ?? 0,
         gapPct: fallbackPlanRatios.subjectRatios[subject] ?? 0,
       })).slice(0, 3),
+      isManualFocus: false,
       activityMix: [],
       ronbunCauseCounts: [],
     };
