@@ -122,19 +122,20 @@ const buildHeatmapRange = (baseDate: Date = new Date(), weeks = 26) => {
 
 export const getDashboardData = async (): Promise<DashboardData> => {
   try {
-    const plan = await getOrCreateWeeklyPlan();
-    const planRatios = parsePlanRatios(plan);
-
     const range = getWeekRange(new Date());
     const prevRange = getWeekRange(subWeeks(new Date(), 1));
     const heatmapRange = buildHeatmapRange();
     const heatmapDates = heatmapRange.dates;
-    const [weekSessions, previousWeekSessions, recentSessions, heatmapSessions] = await Promise.all([
+
+    const [plan, weekSessions, previousWeekSessions, recentSessions, heatmapSessions] = await Promise.all([
+      getOrCreateWeeklyPlan(),
       listStudySessionsInRange({ from: range.start, to: range.end, limit: 1000 }),
       listStudySessionsInRange({ from: prevRange.start, to: prevRange.end, limit: 1000 }),
       listRecentStudySessions(12),
       listStudySessionsInRange({ from: heatmapRange.start, to: heatmapRange.end, limit: 10000 }),
     ]);
+
+    const planRatios = parsePlanRatios(plan);
 
     const weekDates = buildWeekDates();
     const today = getTodayDateString();

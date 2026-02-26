@@ -1,14 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Flame, Scale } from 'lucide-react';
+import { Scale } from 'lucide-react';
 
 import { NAV_ITEMS } from '@/components/app/navigation';
 import { cn } from '@/lib/utils';
 
 type SidebarProps = {
   pathname: string;
-  streak: number;
+  streakSlot: React.ReactNode;
   open: boolean;
   onNavigate?: () => void;
 };
@@ -18,7 +18,7 @@ const isActivePath = (pathname: string, href: string) => {
   return pathname.startsWith(href);
 };
 
-export function Sidebar({ pathname, streak, open, onNavigate }: SidebarProps) {
+export function Sidebar({ pathname, streakSlot, open, onNavigate }: SidebarProps) {
   return (
     <aside className={cn('sidebar', open && 'open')}>
       <div className='border-b border-border px-5 pb-5 pt-6'>
@@ -51,20 +51,7 @@ export function Sidebar({ pathname, streak, open, onNavigate }: SidebarProps) {
         })}
       </nav>
 
-      <div className='border-t border-border px-5 py-4'>
-        <div
-          className={cn(
-            'inline-flex items-center gap-1 rounded-2xl border px-[10px] py-[5px]',
-            streak >= 7 ? 'border-[#FFB74D] bg-[#FFF3E0]' : 'border-border bg-bg'
-          )}
-        >
-          <Flame size={13} color={streak >= 7 ? '#FF8F00' : 'var(--sub)'} />
-          <span className={cn('text-[13px] font-bold', streak >= 7 ? 'text-[#E65100]' : 'text-text')}>
-            {streak}
-          </span>
-          <span className='text-[10px] text-sub'>日連続</span>
-        </div>
-      </div>
+      <div className='border-t border-border px-5 py-4'>{streakSlot}</div>
     </aside>
   );
 }

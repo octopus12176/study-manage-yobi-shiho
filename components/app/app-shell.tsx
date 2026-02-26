@@ -11,10 +11,10 @@ import { Button } from '@/components/ui/button';
 
 type AppShellProps = {
   children: React.ReactNode;
-  streak: number;
+  streakSlot: React.ReactNode;
 };
 
-export function AppShell({ children, streak }: AppShellProps) {
+export function AppShell({ children, streakSlot }: AppShellProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -24,7 +24,7 @@ export function AppShell({ children, streak }: AppShellProps) {
 
   return (
     <div className='relative min-h-screen bg-bg text-text'>
-      <Sidebar pathname={pathname} open={sidebarOpen} streak={streak} onNavigate={() => setSidebarOpen(false)} />
+      <Sidebar pathname={pathname} open={sidebarOpen} streakSlot={streakSlot} onNavigate={() => setSidebarOpen(false)} />
 
       <header className='mobile-header sticky top-0 z-50 hidden items-center justify-between border-b border-border bg-[rgba(255,255,255,0.84)] px-4 py-3 backdrop-blur-xl'>
         <div className='flex items-center gap-2.5'>
