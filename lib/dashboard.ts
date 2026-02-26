@@ -247,7 +247,9 @@ export const getDashboardData = async (): Promise<DashboardData> => {
       .sort((a, b) => parseISO(b.started_at).getTime() - parseISO(a.started_at).getTime());
 
     const yesterdayMemos = weekSessions.filter(
-      (session) => session.started_at.startsWith(yesterday) && Boolean(session.memo)
+      (session) =>
+        session.started_at.startsWith(yesterday) &&
+        (Boolean(session.memo) || (session.confidence ?? 5) <= 3)
     );
 
     const targetHours = planRatios.weekdayHours * 5 + planRatios.weekendHours * 2;

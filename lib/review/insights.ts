@@ -30,17 +30,19 @@ export const generateReviewInsights = async (data: DashboardData): Promise<Revie
     return buildFallbackInsights(data);
   }
 
-  const memoInputs = data.yesterdayMemos.map((session) => ({
-    id: session.id,
-    subject: session.subject,
-    memo: session.memo ?? '',
-    confidence: session.confidence ?? 3,
-  }));
+  const memoInputs = data.yesterdayMemos
+    .map((session) => ({
+      id: session.id,
+      subject: session.subject,
+      memo: session.memo ?? '',
+      confidence: session.confidence ?? 3,
+    }))
+    .sort((a, b) => a.confidence - b.confidence);
 
   const payload = {
     model: getOpenAIModel(),
     instructions:
-      'You are a study review assistant for Japanese law exam prep. Respond in Japanese. Keep feedback concise and actionable.',
+      'You are a study review assistant for Japanese law exam prep. Respond in Japanese. Keep feedback concise and actionable. Prioritize sessions with low confidence (1-3) when generating memoFeedbacks — these represent areas where the student struggled most and need focused attention.',
     input: [
       {
         role: 'user',

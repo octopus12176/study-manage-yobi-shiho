@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { ClipboardPen, Sparkles } from 'lucide-react';
 
 import { createStudySessionAction, type LogFormInput } from '@/app/log/actions';
@@ -35,6 +35,8 @@ const defaultPayload: LogFormInput = {
   causeCategory: '',
 };
 
+const LAST_MATERIAL_KEY = 'log_last_material';
+
 export function LogForm({ defaultSubject }: LogFormProps) {
   const [payload, setPayload] = useState<LogFormInput>({
     ...defaultPayload,
@@ -42,6 +44,15 @@ export function LogForm({ defaultSubject }: LogFormProps) {
   });
   const [message, setMessage] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [customMinutes, setCustomMinutes] = useState<string>('');
+
+  // コンポーネントマウント時に前回教材を復元
+  useEffect(() => {
+    const lastMaterial = localStorage.getItem(LAST_MATERIAL_KEY);
+    if (lastMaterial) {
+      setPayload((prev) => ({ ...prev, material: lastMaterial }));
+    }
+  }, []);
 
   const submit = () => {
     startTransition(async () => {
@@ -50,7 +61,18 @@ export function LogForm({ defaultSubject }: LogFormProps) {
       const result = await createStudySessionAction(normalized);
       setMessage(result.message);
       if (result.ok) {
-        setPayload((prev) => ({ ...defaultPayload, subject: prev.subject }));
+        // 送信成功時に教材を localStorage に保存
+        if (payload.material) {
+          localStorage.setItem(LAST_MATERIAL_KEY, payload.material);
+        }
+        // リセット時に material は localStorage から復元した値を引き継ぐ
+        const savedMaterial = payload.material;
+        setPayload((prev) => ({
+          ...defaultPayload,
+          subject: prev.subject,
+          material: savedMaterial,
+        }));
+        setCustomMinutes('');
       }
     });
   };
@@ -155,16 +177,36 @@ export function LogForm({ defaultSubject }: LogFormProps) {
         <div className='grid gap-4 md:grid-cols-[1fr_auto]'>
           <div className='rounded-2xl border border-borderLight bg-[rgba(255,255,255,0.76)] p-4'>
             <Label>時間（分）</Label>
-            <div className='flex flex-wrap gap-1.5'>
+            <div className='flex flex-wrap items-center gap-1.5'>
               {DEFAULT_LOG_MINUTES.map((minutes) => (
                 <Chip
                   key={minutes}
                   label={`${minutes}分`}
                   small
-                  active={payload.minutes === minutes}
-                  onClick={() => setPayload((prev) => ({ ...prev, minutes }))}
+                  active={payload.minutes === minutes && customMinutes === ''}
+                  onClick={() => {
+                    setCustomMinutes('');
+                    setPayload((prev) => ({ ...prev, minutes }));
+                  }}
                 />
               ))}
+              {/* カスタム分数入力フィールド */}
+              <input
+                type='number'
+                min='1'
+                max='999'
+                placeholder='分数を入力'
+                value={customMinutes}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCustomMinutes(val);
+                  const parsed = parseInt(val, 10);
+                  if (!isNaN(parsed) && parsed > 0) {
+                    setPayload((prev) => ({ ...prev, minutes: parsed }));
+                  }
+                }}
+                className='h-[26px] w-[90px] rounded-full border-[1.5px] border-border bg-transparent px-[10px] text-[11px] outline-none transition-colors focus:border-text'
+              />
             </div>
           </div>
 

@@ -27,6 +27,15 @@ export function DashboardView({ data }: DashboardViewProps) {
   const heroFocus = data.focusSubjects[0];
   const weeklyPracticeHours = ((weeklyHours * data.exerciseRatio) / 100).toFixed(1);
 
+  // 今日の手応え平均（confidence が null でないセッションのみ）
+  const todayConfidences = data.todaySessions
+    .map((s) => s.confidence)
+    .filter((c): c is number => c !== null && c !== undefined);
+  const avgConfidence =
+    todayConfidences.length > 0
+      ? (todayConfidences.reduce((acc, c) => acc + c, 0) / todayConfidences.length).toFixed(1)
+      : null;
+
   return (
     <section className='flex flex-col gap-4'>
       {data.yesterdayMemos.length > 0 && (
@@ -92,6 +101,11 @@ export function DashboardView({ data }: DashboardViewProps) {
               <p className='font-mono text-[10px] tracking-[0.13em] text-white/70'>Today</p>
               <p className='mt-1 text-[28px] font-black leading-none'>{data.todaySessions.length}</p>
               <p className='mt-1 text-[11px] text-white/75'>本日のセッション数</p>
+              {avgConfidence !== null && (
+                <p className='mt-1 text-[11px] text-white/75'>
+                  手応え avg <span className='font-mono font-bold text-white'>{avgConfidence}</span>
+                </p>
+              )}
             </div>
             <div className='rounded-[14px] border border-white/20 bg-black/20 p-3'>
               <p className='font-mono text-[10px] tracking-[0.13em] text-white/70'>Exam Fit</p>
@@ -326,6 +340,38 @@ export function DashboardView({ data }: DashboardViewProps) {
               <p className='text-[13px] text-text'>
                 「{data.reviewPattern[0][0]}」が{data.reviewPattern[0][1]}回発生。次回ログではこの観点を先にチェック。
               </p>
+            </div>
+          )}
+
+          {data.ronbunCauseCounts.length > 0 && (
+            <div className='card card-soft'>
+              <div className='mb-2.5 flex items-center gap-2'>
+                <p className='text-sm font-bold'>今週の論文弱点</p>
+                <span className='font-mono text-[10px] tracking-[0.08em] text-sub'>RONBUN</span>
+              </div>
+              {data.ronbunCauseCounts.slice(0, 3).map((item, idx) => (
+                <div
+                  key={item.category}
+                  className='flex items-center justify-between border-b border-borderLight py-[7px] last:border-none'
+                >
+                  <div className='flex items-center gap-2'>
+                    <span
+                      className='flex size-5 items-center justify-center rounded-md text-[10px] font-bold'
+                      style={{
+                        background:
+                          idx === 0 ? 'var(--danger)' : idx === 1 ? 'var(--warn)' : 'var(--border)',
+                        color: idx < 2 ? 'white' : 'var(--sub)',
+                      }}
+                    >
+                      {idx + 1}
+                    </span>
+                    <span className='text-[13px] font-semibold'>{item.category}</span>
+                  </div>
+                  <span className='text-xs text-sub'>
+                    {item.pct}% · {item.count}回
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>
