@@ -30,12 +30,14 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
     template: string;
     norm: string;
     pitfall: string;
+    rank: string;
   }>({
     subject: SUBJECTS[0] as string,
     title: '',
     template: '',
     norm: '',
     pitfall: '',
+    rank: 'C',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,11 +65,12 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
 
   const handleOpenModal = () => {
     setFormData({
-      subject: SUBJECTS[0],
+      subject: SUBJECTS[0] as string,
       title: '',
       template: '',
       norm: '',
       pitfall: '',
+      rank: 'C',
     });
     setSubmitError('');
     setIsModalOpen(true);
@@ -164,6 +167,13 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                     <span className='inline-flex rounded bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent'>
                       {template.subject}
                     </span>
+                    <span className={`inline-flex rounded px-2 py-0.5 text-xs font-bold ${
+                      template.rank === 'A' ? 'bg-red-100 text-red-700' :
+                      template.rank === 'B' ? 'bg-amber-100 text-amber-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {template.rank}
+                    </span>
                     <span className='font-semibold text-text'>{template.title}</span>
                   </div>
                   <ChevronDown
@@ -175,6 +185,20 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                 {/* 展開部分 */}
                 {isExpanded && (
                   <div className='border-t border-border bg-bg px-5 py-4 space-y-4'>
+                    {/* ランク表示 */}
+                    <div className='flex items-center gap-2'>
+                      <span className='text-xs font-semibold uppercase tracking-wider text-sub'>ランク:</span>
+                      <span className={`inline-flex rounded px-3 py-1 text-sm font-bold ${
+                        template.rank === 'A' ? 'bg-red-100 text-red-700' :
+                        template.rank === 'B' ? 'bg-amber-100 text-amber-700' :
+                        'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {template.rank === 'A' && 'A - 最重要'}
+                        {template.rank === 'B' && 'B - 重要'}
+                        {template.rank === 'C' && 'C - 補助的'}
+                      </span>
+                    </div>
+
                     {template.template && (
                       <div>
                         <div className='text-xs font-semibold uppercase tracking-wider text-sub mb-2'>
@@ -251,7 +275,7 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
 
             {/* フォーム */}
             <form onSubmit={handleSaveTemplate} className='space-y-4'>
-              {/* 科目・論点名（2カラム） */}
+              {/* 科目・ランク（2カラム） */}
               <div className='grid grid-cols-2 gap-4'>
                 <div>
                   <Label htmlFor='subject'>科目</Label>
@@ -272,17 +296,34 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                 </div>
 
                 <div>
-                  <Label htmlFor='title'>論点名</Label>
-                  <Input
-                    id='title'
-                    value={formData.title}
+                  <Label htmlFor='rank'>ランク</Label>
+                  <select
+                    id='rank'
+                    value={formData.rank}
                     onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
+                      setFormData({ ...formData, rank: e.target.value })
                     }
-                    placeholder='例: 処分性の判断基準'
-                    className='mt-2'
-                  />
+                    className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20'
+                  >
+                    <option value='A'>A - 最重要</option>
+                    <option value='B'>B - 重要</option>
+                    <option value='C'>C - 補助的</option>
+                  </select>
                 </div>
+              </div>
+
+              {/* 論点名 */}
+              <div>
+                <Label htmlFor='title'>論点名</Label>
+                <Input
+                  id='title'
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  placeholder='例: 処分性の判断基準'
+                  className='mt-2'
+                />
               </div>
 
               {/* 論点テンプレ */}

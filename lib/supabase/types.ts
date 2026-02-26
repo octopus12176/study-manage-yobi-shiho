@@ -93,6 +93,7 @@ export type Database = {
           template: string | null;
           norm: string | null;
           pitfall: string | null;
+          rank: string;
           created_at: string;
         };
         Insert: {
@@ -103,6 +104,7 @@ export type Database = {
           template?: string | null;
           norm?: string | null;
           pitfall?: string | null;
+          rank?: string;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['essay_templates']['Insert']>;

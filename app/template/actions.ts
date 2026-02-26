@@ -9,6 +9,7 @@ export type EssayTemplateInput = {
   template: string;
   norm: string;
   pitfall: string;
+  rank: string;
 };
 
 export async function createEssayTemplateAction(payload: EssayTemplateInput) {

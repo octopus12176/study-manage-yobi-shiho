@@ -287,6 +287,7 @@ export const createEssayTemplate = async (input: {
   template?: string | null;
   norm?: string | null;
   pitfall?: string | null;
+  rank?: string;
 }): Promise<EssayTemplateRow> => {
   const user = await getUserOrThrow();
   const supabase = await createClient();
@@ -301,6 +302,7 @@ export const createEssayTemplate = async (input: {
       template: input.template || null,
       norm: input.norm || null,
       pitfall: input.pitfall || null,
+      rank: input.rank || 'C',
     })
     .select('*')
     .single();
