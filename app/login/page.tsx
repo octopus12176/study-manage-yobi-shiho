@@ -6,6 +6,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { isEmailWhitelisted } from '@/lib/auth/whitelist';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
@@ -22,6 +23,12 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMessage('');
 
+    if (!isEmailWhitelisted(email)) {
+      setErrorMessage('このメールアドレスはログインが許可されていません。');
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
@@ -37,6 +44,12 @@ export default function LoginPage() {
   const handleSignUp = async () => {
     setLoading(true);
     setErrorMessage('');
+
+    if (!isEmailWhitelisted(email)) {
+      setErrorMessage('このメールアドレスはログインが許可されていません。');
+      setLoading(false);
+      return;
+    }
 
     const { error } = await supabase.auth.signUp({ email, password });
 
