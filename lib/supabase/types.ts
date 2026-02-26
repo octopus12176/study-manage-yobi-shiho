@@ -17,6 +17,7 @@ export type Database = {
           activity: 'input' | 'drill' | 'review' | 'write';
           confidence: number | null;
           memo: string | null;
+          notes: string | null;
           cause_category: string | null;
           created_at: string;
         };
@@ -33,6 +34,7 @@ export type Database = {
           activity: 'input' | 'drill' | 'review' | 'write';
           confidence?: number | null;
           memo?: string | null;
+          notes?: string | null;
           cause_category?: string | null;
           created_at?: string;
         };

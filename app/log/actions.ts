@@ -13,6 +13,7 @@ export type LogFormInput = {
   minutes: number;
   confidence: number;
   memo: string;
+  notes?: string;
   date?: string; // 'yyyy-MM-dd' 形式
   causeCategory?: string;
 };
@@ -43,6 +44,7 @@ export async function createStudySessionAction(payload: LogFormInput) {
     activity: payload.activity,
     confidence: payload.confidence,
     memo: payload.memo || null,
+    notes: payload.notes || null,
     cause_category: payload.causeCategory || null,
   });
 

@@ -34,6 +34,7 @@ const defaultPayload: LogFormInput = {
   minutes: 60,
   confidence: 3,
   memo: '',
+  notes: '',
   date: today,
   causeCategory: '',
 };
@@ -254,6 +255,15 @@ export function LogForm({ defaultSubject }: LogFormProps) {
               ))}
             </div>
           </div>
+        </div>
+
+        <div className='rounded-2xl border border-borderLight bg-[rgba(255,255,255,0.76)] p-4'>
+          <Label>勉強内容</Label>
+          <Textarea
+            placeholder='やったことを自由に記録（任意）'
+            value={payload.notes}
+            onChange={(event) => setPayload((prev) => ({ ...prev, notes: event.target.value }))}
+          />
         </div>
 
         <div className='rounded-2xl border border-borderLight bg-[rgba(255,255,255,0.76)] p-4'>
