@@ -328,7 +328,6 @@ export const updateEssayTemplate = async (
   const user = await getUserOrThrow();
   const supabase = await createClient();
 
-  // @ts-expect-error - Supabase type inference issue with generic parameters
   const { data, error } = await supabase
     .from('essay_templates')
     .update(input)
