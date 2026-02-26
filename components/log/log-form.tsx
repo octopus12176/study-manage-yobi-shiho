@@ -3,7 +3,8 @@
 import { useEffect, useState, useTransition } from 'react';
 import { ClipboardPen, Sparkles } from 'lucide-react';
 
-import { createStudySessionAction, type LogFormInput } from '@/app/log/actions';
+import { createStudySessionAction, updateStudySessionAction, type LogFormInput } from '@/app/log/actions';
+import type { StudySessionRow } from '@/lib/supabase/queries';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -21,6 +22,8 @@ import {
 
 type LogFormProps = {
   defaultSubject?: string;
+  editSession?: StudySessionRow;
+  onSuccess?: () => void;
 };
 
 const today = new Date().toISOString().slice(0, 10);
@@ -41,11 +44,30 @@ const defaultPayload: LogFormInput = {
 
 const LAST_MATERIAL_KEY = 'log_last_material';
 
-export function LogForm({ defaultSubject }: LogFormProps) {
+const buildInitialPayload = (editSession: StudySessionRow | undefined): LogFormInput => {
+  if (!editSession) {
+    return { ...defaultPayload, date: today };
+  }
+  return {
+    subject: editSession.subject,
+    material: editSession.material ?? '',
+    exam: editSession.exam as LogFormInput['exam'],
+    track: editSession.track as LogFormInput['track'],
+    activity: editSession.activity as LogFormInput['activity'],
+    minutes: editSession.duration_min,
+    confidence: editSession.confidence ?? 3,
+    memo: editSession.memo ?? '',
+    notes: editSession.notes ?? '',
+    date: editSession.started_at.slice(0, 10),
+    causeCategory: editSession.cause_category ?? '',
+  };
+};
+
+export function LogForm({ defaultSubject, editSession, onSuccess }: LogFormProps) {
+  const initialPayload = buildInitialPayload(editSession);
   const [payload, setPayload] = useState<LogFormInput>({
-    ...defaultPayload,
-    subject: defaultSubject ?? defaultPayload.subject,
-    date: today,
+    ...initialPayload,
+    subject: editSession ? initialPayload.subject : defaultSubject ?? initialPayload.subject,
   });
   const [message, setMessage] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -63,23 +85,29 @@ export function LogForm({ defaultSubject }: LogFormProps) {
     startTransition(async () => {
       const normalized =
         payload.track === 'ronbun' ? payload : { ...payload, causeCategory: '' };
-      const result = await createStudySessionAction(normalized);
+      const result = editSession
+        ? await updateStudySessionAction(editSession.id, normalized)
+        : await createStudySessionAction(normalized);
       setMessage(result.message);
       if (result.ok) {
-        // 送信成功時に教材を localStorage に保存
-        if (payload.material) {
-          localStorage.setItem(LAST_MATERIAL_KEY, payload.material);
+        if (editSession) {
+          // 編集モード: コールバック呼び出し（モーダル閉鎖等）
+          onSuccess?.();
+        } else {
+          // 新規作成モード: フォームリセット
+          if (payload.material) {
+            localStorage.setItem(LAST_MATERIAL_KEY, payload.material);
+          }
+          const savedMaterial = payload.material;
+          const currentToday = new Date().toISOString().slice(0, 10);
+          setPayload((prev) => ({
+            ...defaultPayload,
+            subject: prev.subject,
+            material: savedMaterial,
+            date: currentToday,
+          }));
+          setCustomMinutes('');
         }
-        // リセット時に material は localStorage から復元した値を引き継ぐ
-        const savedMaterial = payload.material;
-        const currentToday = new Date().toISOString().slice(0, 10);
-        setPayload((prev) => ({
-          ...defaultPayload,
-          subject: prev.subject,
-          material: savedMaterial,
-          date: currentToday,
-        }));
-        setCustomMinutes('');
       }
     });
   };
@@ -92,10 +120,14 @@ export function LogForm({ defaultSubject }: LogFormProps) {
           <div>
             <p className='mb-1 inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/20 px-2.5 py-1 font-mono text-[10px] tracking-[0.11em]'>
               <ClipboardPen size={12} />
-              LOG INPUT
+              {editSession ? 'LOG EDIT' : 'LOG INPUT'}
             </p>
-            <h1 className='text-[23px] font-black tracking-[-0.03em]'>学習を記録</h1>
-            <p className='mt-1 text-[12px] text-white/80'>今の1セッションを最短で残して、次の学習に繋げる</p>
+            <h1 className='text-[23px] font-black tracking-[-0.03em]'>
+              {editSession ? '学習記録を編集' : '学習を記録'}
+            </h1>
+            <p className='mt-1 text-[12px] text-white/80'>
+              {editSession ? '記録の内容を更新します' : '今の1セッションを最短で残して、次の学習に繋げる'}
+            </p>
           </div>
           <span className='rounded-[10px] border border-white/30 bg-white/20 p-2'>
             <Sparkles size={16} />
@@ -302,7 +334,7 @@ export function LogForm({ defaultSubject }: LogFormProps) {
           disabled={isPending}
           onClick={submit}
         >
-          {isPending ? '保存中...' : '記録する'}
+          {isPending ? '保存中...' : editSession ? '更新する' : '記録する'}
         </Button>
       </div>
     </Card>

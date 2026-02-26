@@ -100,6 +100,43 @@ export const createStudySession = async (
   return data;
 };
 
+export const updateStudySession = async (
+  id: string,
+  payload: Omit<StudySessionInsert, 'user_id'>
+): Promise<StudySessionRow> => {
+  const user = await getUserOrThrow();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('study_sessions')
+    .update(payload as unknown as { [key: string]: unknown })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error('Failed to update study session');
+  }
+
+  return data;
+};
+
+export const deleteStudySession = async (id: string): Promise<void> => {
+  const user = await getUserOrThrow();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('study_sessions')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    throw error;
+  }
+};
+
 export const createPomodoroRun = async (
   payload: Omit<PomodoroRunInsert, 'user_id'>
 ): Promise<void> => {

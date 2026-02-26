@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarCheck, Gauge, Sparkles, Target } from 'lucide-react';
+import { CalendarCheck, Sparkles, Target } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
 import { updateWeeklyPlanAction } from '@/app/plan/actions';
@@ -34,13 +34,23 @@ export function PlanView({ data }: PlanViewProps) {
 
   const submit = () => {
     startTransition(async () => {
-      const result = await updateWeeklyPlanAction({
-        targetHours,
-        weekdayHours,
-        weekendHours,
-        exerciseRatio,
-      });
-      setMessage(result.message);
+      try {
+        const result = await updateWeeklyPlanAction({
+          targetHours,
+          weekdayHours,
+          weekendHours,
+          exerciseRatio,
+        });
+        setMessage(result.message);
+        // ページ再読み込みで確実に最新データを取得
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('Failed to update weekly plan:', errorMessage);
+        setMessage(`更新に失敗しました: ${errorMessage}`);
+      }
     });
   };
 

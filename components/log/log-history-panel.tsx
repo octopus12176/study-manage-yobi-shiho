@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import { Filter, RotateCcw, Search } from 'lucide-react';
+import { Filter, RotateCcw, Search, Pencil, Trash2 } from 'lucide-react';
 
 import { Chip } from '@/components/ui/chip';
 import { ConfDots } from '@/components/ui/confdots';
 import { MiniBar } from '@/components/ui/minibar';
 import { SUBJECTS, TRACK_OPTIONS, ACTIVITY_OPTIONS } from '@/lib/constants';
+import { deleteStudySessionAction } from '@/app/log/actions';
+import { EditSessionModal } from './edit-session-modal';
 import type { StudySessionRow } from '@/lib/supabase/queries';
 
 type LogHistoryPanelProps = {
@@ -41,6 +43,7 @@ export function LogHistoryPanel({ sessions }: LogHistoryPanelProps) {
   const [track, setTrack] = useState('all');
   const [activity, setActivity] = useState('all');
   const [query, setQuery] = useState('');
+  const [editingSession, setEditingSession] = useState<StudySessionRow | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -68,6 +71,11 @@ export function LogHistoryPanel({ sessions }: LogHistoryPanelProps) {
     setTrack('all');
     setActivity('all');
     setQuery('');
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('この学習記録を削除しますか？')) return;
+    await deleteStudySessionAction(id);
   };
 
   return (
@@ -185,6 +193,20 @@ export function LogHistoryPanel({ sessions }: LogHistoryPanelProps) {
                     )}
                   </div>
                   <div className='flex items-center gap-2'>
+                    <button
+                      type='button'
+                      onClick={() => setEditingSession(session)}
+                      className='rounded-md p-1 text-sub hover:text-text'
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => handleDelete(session.id)}
+                      className='rounded-md p-1 text-sub hover:text-danger'
+                    >
+                      <Trash2 size={13} />
+                    </button>
                     <span
                       className='inline-flex rounded-md px-2 py-1 text-[10px] font-semibold'
                       style={{ color: tone.color, background: tone.bg }}
@@ -206,6 +228,8 @@ export function LogHistoryPanel({ sessions }: LogHistoryPanelProps) {
           })}
         </div>
       )}
+
+      {editingSession && <EditSessionModal session={editingSession} onClose={() => setEditingSession(null)} />}
     </section>
   );
 }
