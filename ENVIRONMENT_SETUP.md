@@ -37,6 +37,7 @@ supabase status
 ```
 
 出力例：
+
 ```
 Project URL    │ http://127.0.0.1:54321
 Publishable    │ sb_publishable_<実際の値>
@@ -50,7 +51,7 @@ S3 URL         │ http://127.0.0.1:54321/storage/v1/s3
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<出力された anon_key>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<出力された publishable_key>
 OPENAI_API_KEY=<オプション - ローカル開発時は不要>
 ```
 
@@ -79,11 +80,11 @@ OPENAI_API_KEY=<OpenAI API キー>
 2. プロジェクトを選択 → **Settings** → **Environment Variables**
 3. 以下の変数を追加：
 
-| 環境変数名 | 値 | 環境 |
-|-----------|-----|------|
-| `NEXT_PUBLIC_SUPABASE_URL` | 本番 Supabase プロジェクト URL | Production |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 本番 Supabase anon key | Production |
-| `OPENAI_API_KEY` | OpenAI API キー | Production |
+| 環境変数名                      | 値                             | 環境       |
+| ------------------------------- | ------------------------------ | ---------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | 本番 Supabase プロジェクト URL | Production |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 本番 Supabase anon key         | Production |
+| `OPENAI_API_KEY`                | OpenAI API キー                | Production |
 
 ### 3. ビルド・デプロイ確認
 
