@@ -1,0 +1,187 @@
+import { parseISO } from 'date-fns';
+
+import { DEFAULT_WEEKLY_PLAN, SUBJECTS, WEEKDAY_LABELS } from '@/lib/constants';
+import { getTodayDateString, getWeekRange, getYesterdayDateString } from '@/lib/date';
+import { buildWeekDates, getOrCreateWeeklyPlan, listRecentStudySessions, listStudySessionsInRange } from '@/lib/supabase/queries';
+import type { StudySessionRow, WeeklyPlanRow } from '@/lib/supabase/queries';
+
+type WeeklyPlanRatios = {
+  weekdayHours: number;
+  weekendHours: number;
+  exerciseRatio: number;
+  subjectRatios: Record<string, number>;
+};
+
+export type DashboardData = {
+  weekDates: string[];
+  weekLabels: string[];
+  dailyMinutes: Array<{ date: string; minutes: number }>;
+  todaySessions: StudySessionRow[];
+  recentSessions: StudySessionRow[];
+  yesterdayMemos: StudySessionRow[];
+  weeklyHoursText: string;
+  weeklyMinutes: number;
+  exerciseRatio: number;
+  subjectBreakdown: Record<string, number>;
+  weakPoints: Array<[string, number]>;
+  reviewPattern: Array<[string, number]>;
+  plan: WeeklyPlanRow;
+  planRatios: WeeklyPlanRatios;
+  targetHours: number;
+};
+
+const fallbackPlanRatios: WeeklyPlanRatios = {
+  weekdayHours: DEFAULT_WEEKLY_PLAN.weekdayHours,
+  weekendHours: DEFAULT_WEEKLY_PLAN.weekendHours,
+  exerciseRatio: DEFAULT_WEEKLY_PLAN.exerciseRatio,
+  subjectRatios: { ...DEFAULT_WEEKLY_PLAN.subjectRatios },
+};
+
+const parsePlanRatios = (plan: WeeklyPlanRow): WeeklyPlanRatios => {
+  const ratios = plan.ratios;
+  if (!ratios || typeof ratios !== 'object' || Array.isArray(ratios)) {
+    return fallbackPlanRatios;
+  }
+
+  const raw = ratios as Record<string, unknown>;
+  const subjectRatios =
+    raw.subjectRatios && typeof raw.subjectRatios === 'object' && !Array.isArray(raw.subjectRatios)
+      ? (raw.subjectRatios as Record<string, number>)
+      : fallbackPlanRatios.subjectRatios;
+
+  return {
+    weekdayHours:
+      typeof raw.weekdayHours === 'number' ? raw.weekdayHours : fallbackPlanRatios.weekdayHours,
+    weekendHours:
+      typeof raw.weekendHours === 'number' ? raw.weekendHours : fallbackPlanRatios.weekendHours,
+    exerciseRatio:
+      typeof raw.exerciseRatio === 'number' ? raw.exerciseRatio : fallbackPlanRatios.exerciseRatio,
+    subjectRatios,
+  };
+};
+
+const getPatternKey = (memo: string | null): string | null => {
+  if (!memo) return null;
+  if (memo.includes('処分性')) return '処分性';
+  if (memo.includes('原告適格')) return '原告適格';
+  if (memo.includes('あてはめ')) return 'あてはめ';
+  if (memo.includes('時間')) return '時間配分';
+  if (memo.length > 0) return '規範・論点整理';
+  return null;
+};
+
+export const getDashboardData = async (): Promise<DashboardData> => {
+  try {
+    const plan = await getOrCreateWeeklyPlan();
+    const planRatios = parsePlanRatios(plan);
+
+    const range = getWeekRange(new Date());
+    const [weekSessions, recentSessions] = await Promise.all([
+      listStudySessionsInRange({ from: range.start, to: range.end, limit: 1000 }),
+      listRecentStudySessions(12),
+    ]);
+
+    const weekDates = buildWeekDates();
+    const today = getTodayDateString();
+    const yesterday = getYesterdayDateString();
+
+    const weeklyMinutes = weekSessions.reduce((acc, cur) => acc + cur.duration_min, 0);
+    const weeklyHoursText = (weeklyMinutes / 60).toFixed(1);
+
+    const exerciseMinutes = weekSessions
+      .filter((session) => session.activity === 'drill' || session.activity === 'write')
+      .reduce((acc, cur) => acc + cur.duration_min, 0);
+    const exerciseRatio = weeklyMinutes > 0 ? Math.round((exerciseMinutes / weeklyMinutes) * 100) : 0;
+
+    const dailyMinutes = weekDates.map((date) => ({
+      date,
+      minutes: weekSessions
+        .filter((session) => session.started_at.startsWith(date))
+        .reduce((acc, cur) => acc + cur.duration_min, 0),
+    }));
+
+    const subjectBreakdown = SUBJECTS.reduce<Record<string, number>>((acc, subject) => {
+      acc[subject] = 0;
+      return acc;
+    }, {});
+    weekSessions.forEach((session) => {
+      subjectBreakdown[session.subject] = (subjectBreakdown[session.subject] ?? 0) + session.duration_min;
+    });
+
+    const weakCounter = new Map<string, number>();
+    weekSessions
+      .filter((session) => (session.confidence ?? 3) <= 2)
+      .forEach((session) => {
+        weakCounter.set(session.subject, (weakCounter.get(session.subject) ?? 0) + 1);
+      });
+
+    const reviewCounter = new Map<string, number>();
+    weekSessions.forEach((session) => {
+      const key = getPatternKey(session.memo);
+      if (!key) return;
+      reviewCounter.set(key, (reviewCounter.get(key) ?? 0) + 1);
+    });
+
+    const weakPoints = [...weakCounter.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const reviewPattern = [...reviewCounter.entries()].sort((a, b) => b[1] - a[1]);
+
+    const todaySessions = weekSessions
+      .filter((session) => session.started_at.startsWith(today))
+      .sort((a, b) => parseISO(b.started_at).getTime() - parseISO(a.started_at).getTime());
+
+    const yesterdayMemos = weekSessions.filter(
+      (session) => session.started_at.startsWith(yesterday) && Boolean(session.memo)
+    );
+
+    const targetHours = planRatios.weekdayHours * 5 + planRatios.weekendHours * 2;
+
+    return {
+      weekDates,
+      weekLabels: [...WEEKDAY_LABELS],
+      dailyMinutes,
+      todaySessions,
+      recentSessions,
+      yesterdayMemos,
+      weeklyHoursText,
+      weeklyMinutes,
+      exerciseRatio,
+      subjectBreakdown,
+      weakPoints,
+      reviewPattern,
+      plan,
+      planRatios,
+      targetHours,
+    };
+  } catch {
+    const weekDates = buildWeekDates();
+    const subjectBreakdown = SUBJECTS.reduce<Record<string, number>>((acc, subject) => {
+      acc[subject] = 0;
+      return acc;
+    }, {});
+
+    return {
+      weekDates,
+      weekLabels: [...WEEKDAY_LABELS],
+      dailyMinutes: weekDates.map((date) => ({ date, minutes: 0 })),
+      todaySessions: [],
+      recentSessions: [],
+      yesterdayMemos: [],
+      weeklyHoursText: '0.0',
+      weeklyMinutes: 0,
+      exerciseRatio: 0,
+      subjectBreakdown,
+      weakPoints: [],
+      reviewPattern: [],
+      plan: {
+        id: 'fallback',
+        user_id: 'fallback',
+        week_start: weekDates[0],
+        target_min: DEFAULT_WEEKLY_PLAN.weekdayHours * 5 * 60 + DEFAULT_WEEKLY_PLAN.weekendHours * 2 * 60,
+        ratios: DEFAULT_WEEKLY_PLAN as unknown as Record<string, unknown>,
+        created_at: new Date().toISOString(),
+      },
+      planRatios: fallbackPlanRatios,
+      targetHours: fallbackPlanRatios.weekdayHours * 5 + fallbackPlanRatios.weekendHours * 2,
+    };
+  }
+};
