@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles } from 'lucide-react';
+import { CalendarCheck, Gauge, Sparkles, Target } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
 import { updateWeeklyPlanAction } from '@/app/plan/actions';
@@ -21,6 +21,7 @@ export function PlanView({ data }: PlanViewProps) {
   const [isPending, startTransition] = useTransition();
 
   const actualHours = data.weeklyMinutes / 60;
+  const progress = targetHours > 0 ? Math.min((actualHours / targetHours) * 100, 100) : 0;
   const schedules = data.weekDates.map((date, idx) => ({
     date,
     day: data.weekLabels[idx],
@@ -28,6 +29,8 @@ export function PlanView({ data }: PlanViewProps) {
     actual: data.dailyMinutes[idx]?.minutes ?? 0,
     isWeekend: idx >= 5,
   }));
+
+  const focusSubject = data.focusSubjects[0];
 
   const submit = () => {
     startTransition(async () => {
@@ -43,14 +46,67 @@ export function PlanView({ data }: PlanViewProps) {
 
   return (
     <div className='flex flex-col gap-4'>
-      <h1 className='text-[20px] font-black tracking-[-0.02em]'>週間計画</h1>
+      <section className='relative overflow-hidden rounded-[22px] border border-white/20 bg-[linear-gradient(135deg,rgba(126,87,255,0.9),rgba(255,95,109,0.88)_55%,rgba(17,26,56,0.92))] p-6 text-white shadow-[0_22px_50px_rgba(24,14,62,0.35)]'>
+        <div className='pointer-events-none absolute -left-10 -top-10 h-48 w-48 rounded-full bg-white/15 blur-3xl' />
+        <div className='pointer-events-none absolute -bottom-14 right-0 h-48 w-48 rounded-full bg-cyan-300/25 blur-3xl' />
+
+        <div className='relative grid grid-cols-[1.2fr_1fr] gap-4 max-lg:grid-cols-1'>
+          <div>
+            <p className='mb-2 inline-flex items-center gap-2 rounded-full border border-white/30 bg-black/20 px-3 py-1 font-mono text-[10px] tracking-[0.12em]'>
+              <CalendarCheck size={12} />
+              WEEKLY PLAN
+            </p>
+            <h1 className='text-[30px] font-black leading-[1.12] tracking-[-0.03em]'>週間計画ダッシュボード</h1>
+            <p className='mt-1.5 text-[13px] text-white/85'>
+              今週の実績と目標を並べて、次の一手をすぐ決める。
+            </p>
+            <div className='mt-3 flex flex-wrap gap-2'>
+              <span className='rounded-full border border-white/30 bg-black/20 px-3 py-1 text-[11px] font-semibold'>
+                実績 {actualHours.toFixed(1)}h
+              </span>
+              <span className='rounded-full border border-white/30 bg-black/20 px-3 py-1 text-[11px] font-semibold'>
+                進捗 {progress.toFixed(0)}%
+              </span>
+              <span className='rounded-full border border-white/30 bg-black/20 px-3 py-1 text-[11px] font-semibold'>
+                演習比率 {exerciseRatio}%
+              </span>
+            </div>
+          </div>
+
+          <div className='grid grid-cols-2 gap-2.5'>
+            <div className='rounded-[14px] border border-white/25 bg-black/20 p-3'>
+              <p className='font-mono text-[10px] tracking-[0.12em] text-white/70'>TARGET</p>
+              <p className='mt-1 text-[28px] font-black leading-none'>{targetHours}h</p>
+              <p className='mt-1 text-[11px] text-white/75'>週目標</p>
+            </div>
+            <div className='rounded-[14px] border border-white/25 bg-black/20 p-3'>
+              <p className='font-mono text-[10px] tracking-[0.12em] text-white/70'>WEEKDAY</p>
+              <p className='mt-1 text-[28px] font-black leading-none'>{weekdayHours}h</p>
+              <p className='mt-1 text-[11px] text-white/75'>平日配分</p>
+            </div>
+            <div className='rounded-[14px] border border-white/25 bg-black/20 p-3'>
+              <p className='font-mono text-[10px] tracking-[0.12em] text-white/70'>WEEKEND</p>
+              <p className='mt-1 text-[28px] font-black leading-none'>{weekendHours}h</p>
+              <p className='mt-1 text-[11px] text-white/75'>休日配分</p>
+            </div>
+            <div className='rounded-[14px] border border-white/25 bg-black/20 p-3'>
+              <p className='font-mono text-[10px] tracking-[0.12em] text-white/70'>FOCUS</p>
+              <p className='mt-1 text-[28px] font-black leading-none'>{focusSubject?.subject ?? '—'}</p>
+              <p className='mt-1 text-[11px] text-white/75'>不足科目</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {message && <div className='card border border-success/30 bg-successLight p-3 text-sm text-success'>{message}</div>}
 
       <div className='grid grid-cols-[minmax(280px,1fr)_minmax(280px,1fr)] gap-4 max-lg:grid-cols-1'>
         <div className='card'>
           <div className='mb-4 flex items-center justify-between'>
-            <p className='text-sm font-bold'>週間目標</p>
+            <div>
+              <p className='text-sm font-bold'>週間目標</p>
+              <p className='text-[11px] text-sub'>今週の到達ラインと配分を調整</p>
+            </div>
             <p className='text-xs font-bold' style={{ color: actualHours >= targetHours ? 'var(--success)' : 'var(--warn)' }}>
               {actualHours.toFixed(1)}h / {targetHours}h
             </p>
@@ -105,7 +161,7 @@ export function PlanView({ data }: PlanViewProps) {
               />
             </div>
           </div>
-          <Button variant='default' className='mt-4 w-full' onClick={submit} disabled={isPending}>
+          <Button variant='accent' className='mt-4 w-full' onClick={submit} disabled={isPending}>
             {isPending ? '更新中...' : '週間計画を保存'}
           </Button>
         </div>
@@ -133,7 +189,7 @@ export function PlanView({ data }: PlanViewProps) {
                       className='h-full rounded-md transition-[width] duration-500'
                       style={{
                         width: `${Math.max(percentage, 2)}%`,
-                        background: day.actual > targetMin ? 'var(--success)' : percentage >= 80 ? 'var(--text)' : '#1c1b1888',
+                        background: day.actual > targetMin ? 'var(--success)' : percentage >= 80 ? 'var(--accent2)' : '#1c1b1888',
                       }}
                     />
                     <div
@@ -151,17 +207,45 @@ export function PlanView({ data }: PlanViewProps) {
         </div>
       </div>
 
-      <div className='card bg-[linear-gradient(135deg,var(--dark),var(--darkSoft))] text-white'>
-        <div className='mb-2.5 flex items-center gap-2'>
-          <Sparkles size={16} color='var(--accent)' />
-          <span className='text-xs font-bold tracking-[0.08em] text-white/50'>AI 週次提案</span>
+      <div className='grid grid-cols-[minmax(280px,1fr)_minmax(280px,1fr)] gap-4 max-lg:grid-cols-1'>
+        <div className='card'>
+          <div className='mb-2.5 flex items-center gap-2'>
+            <Target size={16} color='var(--accent)' />
+            <span className='text-xs font-bold tracking-[0.08em] text-sub'>FOCUS PLAN</span>
+          </div>
+          <p className='text-sm font-semibold text-text'>
+            {focusSubject
+              ? `${focusSubject.subject} は目標比で ${focusSubject.gapPct}%不足。今週は +${Math.max(1, focusSubject.gapPct)}% を優先。`
+              : '今週データが不足しています。まずは1件記録して傾向を作りましょう。'}
+          </p>
+          <div className='mt-3 flex flex-wrap gap-2'>
+            <span className='rounded-md bg-accentLight px-2.5 py-1 text-[11px] font-bold text-accent'>
+              {focusSubject?.subject ?? '優先科目'}
+            </span>
+            <span className='rounded-md bg-borderLight px-2.5 py-1 text-[11px] font-semibold text-sub'>
+              現在 {focusSubject?.currentPct ?? 0}%
+            </span>
+            <span className='rounded-md bg-borderLight px-2.5 py-1 text-[11px] font-semibold text-sub'>
+              目標 {focusSubject?.targetPct ?? 0}%
+            </span>
+          </div>
+          <MiniBar className='mt-3' value={focusSubject?.currentPct ?? 0} max={Math.max(focusSubject?.targetPct ?? 0, 1)} color='var(--accent)' h={8} />
         </div>
-        <p className='text-sm leading-[1.7] text-white/85'>
-          今週は行政法の手応えが低めです。来週は行政法の演習比率を+10%にし、特に処分性・原告適格の過去問を重点的に回すことをおすすめします。
-        </p>
-        <div className='mt-3 flex gap-2'>
-          <span className='rounded-md bg-accent/20 px-2.5 py-1 text-[11px] font-bold text-accent'>行政法 +10%</span>
-          <span className='rounded-md bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/55'>演習重視</span>
+
+        <div className='card bg-[linear-gradient(135deg,var(--dark),var(--darkSoft))] text-white'>
+          <div className='mb-2.5 flex items-center gap-2'>
+            <Sparkles size={16} color='var(--accent)' />
+            <span className='text-xs font-bold tracking-[0.08em] text-white/50'>AI 週次提案</span>
+          </div>
+          <p className='text-sm leading-[1.7] text-white/85'>
+            今週は「{focusSubject?.subject ?? '行政法'}」が目標比で不足しています。来週は演習比率を +10% にして、重要論点を短答→論文の順で復習しましょう。
+          </p>
+          <div className='mt-3 flex gap-2'>
+            <span className='rounded-md bg-accent/20 px-2.5 py-1 text-[11px] font-bold text-accent'>
+              {focusSubject?.subject ?? '行政法'} +10%
+            </span>
+            <span className='rounded-md bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/55'>演習重視</span>
+          </div>
         </div>
       </div>
     </div>

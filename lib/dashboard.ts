@@ -1,4 +1,4 @@
-import { parseISO } from 'date-fns';
+import { parseISO, subWeeks } from 'date-fns';
 
 import { DEFAULT_WEEKLY_PLAN, SUBJECTS, WEEKDAY_LABELS } from '@/lib/constants';
 import { getTodayDateString, getWeekRange, getYesterdayDateString } from '@/lib/date';
@@ -10,6 +10,21 @@ type WeeklyPlanRatios = {
   weekendHours: number;
   exerciseRatio: number;
   subjectRatios: Record<string, number>;
+};
+
+type FocusSubject = {
+  subject: string;
+  weeklyMinutes: number;
+  currentPct: number;
+  targetPct: number;
+  gapPct: number;
+};
+
+type ActivityMix = {
+  activity: string;
+  label: string;
+  minutes: number;
+  pct: number;
 };
 
 export type DashboardData = {
@@ -28,6 +43,11 @@ export type DashboardData = {
   plan: WeeklyPlanRow;
   planRatios: WeeklyPlanRatios;
   targetHours: number;
+  previousWeeklyMinutes: number;
+  momentumPercent: number;
+  coverageCount: number;
+  focusSubjects: FocusSubject[];
+  activityMix: ActivityMix[];
 };
 
 const fallbackPlanRatios: WeeklyPlanRatios = {
@@ -70,14 +90,23 @@ const getPatternKey = (memo: string | null): string | null => {
   return null;
 };
 
+const ACTIVITY_LABELS: Record<string, string> = {
+  input: 'インプット',
+  drill: '演習',
+  review: '復習',
+  write: '答案作成',
+};
+
 export const getDashboardData = async (): Promise<DashboardData> => {
   try {
     const plan = await getOrCreateWeeklyPlan();
     const planRatios = parsePlanRatios(plan);
 
     const range = getWeekRange(new Date());
-    const [weekSessions, recentSessions] = await Promise.all([
+    const prevRange = getWeekRange(subWeeks(new Date(), 1));
+    const [weekSessions, previousWeekSessions, recentSessions] = await Promise.all([
       listStudySessionsInRange({ from: range.start, to: range.end, limit: 1000 }),
+      listStudySessionsInRange({ from: prevRange.start, to: prevRange.end, limit: 1000 }),
       listRecentStudySessions(12),
     ]);
 
@@ -87,6 +116,13 @@ export const getDashboardData = async (): Promise<DashboardData> => {
 
     const weeklyMinutes = weekSessions.reduce((acc, cur) => acc + cur.duration_min, 0);
     const weeklyHoursText = (weeklyMinutes / 60).toFixed(1);
+    const previousWeeklyMinutes = previousWeekSessions.reduce((acc, cur) => acc + cur.duration_min, 0);
+    const momentumPercent =
+      previousWeeklyMinutes === 0
+        ? weeklyMinutes > 0
+          ? 100
+          : 0
+        : Math.round(((weeklyMinutes - previousWeeklyMinutes) / previousWeeklyMinutes) * 100);
 
     const exerciseMinutes = weekSessions
       .filter((session) => session.activity === 'drill' || session.activity === 'write')
@@ -107,6 +143,35 @@ export const getDashboardData = async (): Promise<DashboardData> => {
     weekSessions.forEach((session) => {
       subjectBreakdown[session.subject] = (subjectBreakdown[session.subject] ?? 0) + session.duration_min;
     });
+    const coverageCount = Object.values(subjectBreakdown).filter((minutes) => minutes > 0).length;
+
+    const focusSubjects = SUBJECTS.map((subject) => {
+      const weeklyMinutesBySubject = subjectBreakdown[subject] ?? 0;
+      const currentPct = weeklyMinutes > 0 ? Math.round((weeklyMinutesBySubject / weeklyMinutes) * 100) : 0;
+      const targetPct = planRatios.subjectRatios[subject] ?? 0;
+      return {
+        subject,
+        weeklyMinutes: weeklyMinutesBySubject,
+        currentPct,
+        targetPct,
+        gapPct: targetPct - currentPct,
+      };
+    })
+      .sort((a, b) => b.gapPct - a.gapPct || a.weeklyMinutes - b.weeklyMinutes)
+      .slice(0, 3);
+
+    const activityMinutes = new Map<string, number>();
+    weekSessions.forEach((session) => {
+      activityMinutes.set(session.activity, (activityMinutes.get(session.activity) ?? 0) + session.duration_min);
+    });
+    const activityMix = [...activityMinutes.entries()]
+      .map(([activity, minutes]) => ({
+        activity,
+        label: ACTIVITY_LABELS[activity] ?? activity,
+        minutes,
+        pct: weeklyMinutes > 0 ? Math.round((minutes / weeklyMinutes) * 100) : 0,
+      }))
+      .sort((a, b) => b.minutes - a.minutes);
 
     const weakCounter = new Map<string, number>();
     weekSessions
@@ -151,6 +216,11 @@ export const getDashboardData = async (): Promise<DashboardData> => {
       plan,
       planRatios,
       targetHours,
+      previousWeeklyMinutes,
+      momentumPercent,
+      coverageCount,
+      focusSubjects,
+      activityMix,
     };
   } catch {
     const weekDates = buildWeekDates();
@@ -177,11 +247,22 @@ export const getDashboardData = async (): Promise<DashboardData> => {
         user_id: 'fallback',
         week_start: weekDates[0],
         target_min: DEFAULT_WEEKLY_PLAN.weekdayHours * 5 * 60 + DEFAULT_WEEKLY_PLAN.weekendHours * 2 * 60,
-        ratios: DEFAULT_WEEKLY_PLAN as unknown as Record<string, unknown>,
+        ratios: DEFAULT_WEEKLY_PLAN as unknown as WeeklyPlanRow['ratios'],
         created_at: new Date().toISOString(),
       },
       planRatios: fallbackPlanRatios,
       targetHours: fallbackPlanRatios.weekdayHours * 5 + fallbackPlanRatios.weekendHours * 2,
+      previousWeeklyMinutes: 0,
+      momentumPercent: 0,
+      coverageCount: 0,
+      focusSubjects: SUBJECTS.map((subject) => ({
+        subject,
+        weeklyMinutes: 0,
+        currentPct: 0,
+        targetPct: fallbackPlanRatios.subjectRatios[subject] ?? 0,
+        gapPct: fallbackPlanRatios.subjectRatios[subject] ?? 0,
+      })).slice(0, 3),
+      activityMix: [],
     };
   }
 };
