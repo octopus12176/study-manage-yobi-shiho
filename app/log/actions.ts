@@ -13,6 +13,7 @@ export type LogFormInput = {
   minutes: number;
   confidence: number;
   memo: string;
+  date?: string; // 'yyyy-MM-dd' 形式
   causeCategory?: string;
 };
 
@@ -21,7 +22,14 @@ export async function createStudySessionAction(payload: LogFormInput) {
     return { ok: false as const, message: '必須項目を入力してください。' };
   }
 
-  const endedAt = new Date();
+  let endedAt: Date;
+  if (payload.date) {
+    // 指定された日付の 23:59:59 を終了時刻とする
+    endedAt = new Date(`${payload.date}T23:59:59`);
+  } else {
+    // 日付が指定されていなければ現在時刻
+    endedAt = new Date();
+  }
   const startedAt = new Date(endedAt.getTime() - payload.minutes * 60_000);
 
   await createStudySession({

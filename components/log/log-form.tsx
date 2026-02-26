@@ -23,6 +23,8 @@ type LogFormProps = {
   defaultSubject?: string;
 };
 
+const today = new Date().toISOString().slice(0, 10);
+
 const defaultPayload: LogFormInput = {
   subject: '',
   material: '',
@@ -32,6 +34,7 @@ const defaultPayload: LogFormInput = {
   minutes: 60,
   confidence: 3,
   memo: '',
+  date: today,
   causeCategory: '',
 };
 
@@ -41,6 +44,7 @@ export function LogForm({ defaultSubject }: LogFormProps) {
   const [payload, setPayload] = useState<LogFormInput>({
     ...defaultPayload,
     subject: defaultSubject ?? defaultPayload.subject,
+    date: today,
   });
   const [message, setMessage] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -67,10 +71,12 @@ export function LogForm({ defaultSubject }: LogFormProps) {
         }
         // リセット時に material は localStorage から復元した値を引き継ぐ
         const savedMaterial = payload.material;
+        const currentToday = new Date().toISOString().slice(0, 10);
         setPayload((prev) => ({
           ...defaultPayload,
           subject: prev.subject,
           material: savedMaterial,
+          date: currentToday,
         }));
         setCustomMinutes('');
       }
@@ -98,6 +104,17 @@ export function LogForm({ defaultSubject }: LogFormProps) {
 
       <div className='space-y-4 p-6'>
         {message && <div className='rounded-[10px] border border-border bg-accentLight px-4 py-3 text-sm text-text'>{message}</div>}
+
+        <div className='rounded-2xl border border-borderLight bg-[rgba(255,255,255,0.76)] p-4'>
+          <Label>学習日</Label>
+          <input
+            type='date'
+            max={today}
+            value={payload.date ?? today}
+            onChange={(e) => setPayload((prev) => ({ ...prev, date: e.target.value }))}
+            className='mt-2 w-full rounded-xl border-[1.5px] border-border bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-text'
+          />
+        </div>
 
         <div className='rounded-2xl border border-borderLight bg-[rgba(255,255,255,0.76)] p-4'>
           <Label>科目</Label>

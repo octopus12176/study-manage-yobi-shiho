@@ -148,25 +148,53 @@ export const upsertWeeklyPlan = async ({
   const supabase = await createClient();
   const weekStart = getWeekStartString(date ?? new Date());
 
-  const { data, error } = await supabase
+  // 既存レコードを確認
+  const { data: existingPlan, error: fetchError } = await supabase
     .from('weekly_plans')
-    .upsert(
-      {
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('week_start', weekStart)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw fetchError;
+  }
+
+  // 既存レコードがあれば UPDATE、なければ INSERT
+  if (existingPlan) {
+    const { data, error } = await supabase
+      .from('weekly_plans')
+      .update({
+        target_min: targetMin,
+        ratios,
+      })
+      .eq('id', existingPlan.id)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  } else {
+    const { data, error } = await supabase
+      .from('weekly_plans')
+      .insert({
         user_id: user.id,
         week_start: weekStart,
         target_min: targetMin,
         ratios,
-      },
-      { onConflict: 'user_id,week_start' }
-    )
-    .select('*')
-    .single();
+      })
+      .select('*')
+      .single();
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    }
+
+    return data;
   }
-
-  return data;
 };
 
 export const getOrCreateWeeklyPlan = async (date: Date = new Date()): Promise<WeeklyPlanRow> => {
