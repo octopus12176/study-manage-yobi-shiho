@@ -121,12 +121,16 @@ body {
 }
 
 .card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.9));
+  background-color: rgba(255, 255, 255, 0.94);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 22px;
   transition: all 0.2s ease;
   box-shadow: 0 14px 34px rgba(45, 45, 106, 0.08);
+}
+
+.card-soft {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.9));
 }
 
 .btn-p,

@@ -109,7 +109,7 @@ export default async function LogPage() {
         <LogForm defaultSubject={focusSubject} />
 
         <aside className='flex flex-col gap-4'>
-          <section className='card p-5'>
+          <section className='card card-soft p-5'>
             <div className='mb-3 flex items-center justify-between'>
               <p className='text-sm font-bold'>今週の記録サマリー</p>
               <Sparkles size={14} color='var(--accent)' />
@@ -155,7 +155,7 @@ export default async function LogPage() {
             </div>
           </section>
 
-          <section className='card p-5'>
+          <section className='card card-soft p-5'>
             <div className='mb-2 flex items-center gap-2'>
               <Gauge size={15} color='var(--accent2)' />
               <p className='text-sm font-bold'>入力ガイド</p>

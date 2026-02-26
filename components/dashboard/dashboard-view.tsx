@@ -133,7 +133,7 @@ export function DashboardView({ data }: DashboardViewProps) {
             color: 'var(--accent2)',
           },
         ].map((card, idx) => (
-          <div key={card.unit} className='card p-4 text-center' style={{ animation: `countUp ${0.3 + idx * 0.1}s ease` }}>
+          <div key={card.unit} className='card card-soft p-4 text-center' style={{ animation: `countUp ${0.3 + idx * 0.1}s ease` }}>
             <p className='font-mono text-[26px] font-black tracking-[-0.03em]'>{card.value}</p>
             <p className='mt-0.5 text-[11px] font-medium text-sub'>{card.unit}</p>
             <MiniBar className='mt-2' value={card.barValue} max={card.barMax} color={card.color} />
@@ -142,7 +142,7 @@ export function DashboardView({ data }: DashboardViewProps) {
       </div>
 
       <div className='grid grid-cols-[minmax(260px,1fr)_minmax(260px,1fr)_minmax(260px,1fr)] gap-4 max-xl:grid-cols-1'>
-        <div className='card'>
+        <div className='card card-soft'>
           <div className='mb-3 flex items-center justify-between'>
             <p className='text-sm font-bold'>今日の重点科目</p>
             <span className='font-mono text-[10px] tracking-[0.08em] text-sub'>AUTO PICK</span>
@@ -166,7 +166,7 @@ export function DashboardView({ data }: DashboardViewProps) {
           </div>
         </div>
 
-        <div className='card'>
+        <div className='card card-soft'>
           <div className='mb-3 flex items-center justify-between'>
             <p className='text-sm font-bold'>直近セッション</p>
             <span className='font-mono text-[10px] tracking-[0.08em] text-sub'>LATEST</span>
@@ -192,7 +192,7 @@ export function DashboardView({ data }: DashboardViewProps) {
           </div>
         </div>
 
-        <div className='card'>
+        <div className='card card-soft'>
           <div className='mb-3 flex items-center justify-between'>
             <p className='text-sm font-bold'>学習タイプミックス</p>
             <span className='font-mono text-[10px] tracking-[0.08em] text-sub'>THIS WEEK</span>
@@ -221,7 +221,7 @@ export function DashboardView({ data }: DashboardViewProps) {
         </div>
       </div>
 
-      <div className='card'>
+      <div className='card card-soft'>
         <div className='mb-4 flex items-center justify-between'>
           <p className='text-sm font-bold'>今週の学習時間</p>
           <p className='text-[11px] text-sub'>
@@ -259,7 +259,7 @@ export function DashboardView({ data }: DashboardViewProps) {
         </div>
       </div>
 
-      <div className='card'>
+      <div className='card card-soft'>
         <div className='mb-3 flex items-center justify-between'>
           <p className='text-sm font-bold'>学習ヒートマップ</p>
           <span className='text-[11px] text-sub'>直近半年</span>
@@ -268,7 +268,7 @@ export function DashboardView({ data }: DashboardViewProps) {
       </div>
 
       <div className='grid grid-cols-[minmax(280px,1fr)_minmax(280px,1fr)] gap-4 max-lg:grid-cols-1'>
-        <div className='card'>
+        <div className='card card-soft'>
           <p className='mb-3.5 text-sm font-bold'>科目配分</p>
           {Object.entries(data.subjectBreakdown).map(([subject, min]) => {
             const percentage = totalSubjectMinutes > 0 ? Math.round((min / totalSubjectMinutes) * 100) : 0;
@@ -292,7 +292,7 @@ export function DashboardView({ data }: DashboardViewProps) {
 
         <div className='flex flex-col gap-4'>
           {data.weakPoints.length > 0 && (
-            <div className='card border-l-[3px] border-l-danger'>
+            <div className='card card-soft border-l-[3px] border-l-danger'>
               <div className='mb-2.5 flex items-center gap-2'>
                 <Flame size={15} color='var(--danger)' />
                 <p className='text-sm font-bold'>弱点トップ3</p>

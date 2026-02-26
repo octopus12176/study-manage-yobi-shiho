@@ -17,6 +17,7 @@ export function ReviewView({ data, insights }: ReviewViewProps) {
   const exerciseGap = data.exerciseRatio - weeklyExerciseTarget;
   const topMemo = data.yesterdayMemos[0];
   const memoFeedbackMap = new Map(insights.memoFeedbacks.map((item) => [item.id, item]));
+  const hasMemos = data.yesterdayMemos.length > 0;
 
   return (
     <div className='flex flex-col gap-4'>
@@ -84,33 +85,41 @@ export function ReviewView({ data, insights }: ReviewViewProps) {
         </div>
       )}
 
-      <div className='grid grid-cols-[minmax(280px,1fr)_minmax(260px,0.9fr)] gap-4 max-lg:grid-cols-1'>
-        <div className='flex flex-col gap-3'>
-          {data.yesterdayMemos.map((session) => (
-            <div key={session.id} className='card'>
-              <div className='mb-2 flex items-center gap-2'>
-                <Chip label={session.subject} active small />
-                <ConfDots value={session.confidence ?? 3} size={6} />
-                <span className='text-[11px] text-sub'>体感 {session.confidence ?? 3}</span>
+      <div
+        className={
+          hasMemos
+            ? 'grid grid-cols-[minmax(280px,1fr)_minmax(260px,0.9fr)] gap-4 max-lg:grid-cols-1'
+            : 'grid grid-cols-1 gap-4'
+        }
+      >
+        {hasMemos && (
+          <div className='flex flex-col gap-3'>
+            {data.yesterdayMemos.map((session) => (
+              <div key={session.id} className='card'>
+                <div className='mb-2 flex items-center gap-2'>
+                  <Chip label={session.subject} active small />
+                  <ConfDots value={session.confidence ?? 3} size={6} />
+                  <span className='text-[11px] text-sub'>体感 {session.confidence ?? 3}</span>
+                </div>
+                <p className='mb-2 text-[13px] text-sub'>詰まり: {session.memo}</p>
+                {memoFeedbackMap.get(session.id)?.feedback && (
+                  <p className='mb-2 text-[12px] font-semibold text-text'>
+                    AI一言: {memoFeedbackMap.get(session.id)?.feedback}
+                  </p>
+                )}
+                <div className='rounded-[10px] border-l-[3px] border-l-accent bg-accentLight px-3.5 py-3'>
+                  <p className='mb-1 text-[11px] font-bold text-accent'>提案</p>
+                  <p className='text-[13px] leading-[1.6] text-text'>
+                    {memoFeedbackMap.get(session.id)?.nextTask ?? buildSuggestion(session.memo)}
+                  </p>
+                </div>
               </div>
-              <p className='mb-2 text-[13px] text-sub'>詰まり: {session.memo}</p>
-              {memoFeedbackMap.get(session.id)?.feedback && (
-                <p className='mb-2 text-[12px] font-semibold text-text'>
-                  AI一言: {memoFeedbackMap.get(session.id)?.feedback}
-                </p>
-              )}
-              <div className='rounded-[10px] border-l-[3px] border-l-accent bg-accentLight px-3.5 py-3'>
-                <p className='mb-1 text-[11px] font-bold text-accent'>提案</p>
-                <p className='text-[13px] leading-[1.6] text-text'>
-                  {memoFeedbackMap.get(session.id)?.nextTask ?? buildSuggestion(session.memo)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <aside className='flex flex-col gap-3'>
-          <div className='card'>
+          <div className='card card-soft'>
             <div className='mb-2 flex items-center gap-2'>
               <Target size={16} color='var(--accent)' />
               <p className='text-sm font-bold'>今週の演習比率</p>
@@ -121,7 +130,7 @@ export function ReviewView({ data, insights }: ReviewViewProps) {
             </p>
           </div>
 
-          <div className='card'>
+          <div className='card card-soft'>
             <div className='mb-2 flex items-center gap-2'>
               <TriangleAlert size={16} color='var(--warn)' />
               <p className='text-sm font-bold'>弱点トップ</p>
@@ -140,7 +149,7 @@ export function ReviewView({ data, insights }: ReviewViewProps) {
             )}
           </div>
 
-          <div className='card'>
+          <div className='card card-soft'>
             <div className='mb-2 flex items-center gap-2'>
               <Brain size={16} color='var(--accent2)' />
               <p className='text-sm font-bold'>論文の弱点診断</p>

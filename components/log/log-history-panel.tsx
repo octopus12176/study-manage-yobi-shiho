@@ -71,7 +71,7 @@ export function LogHistoryPanel({ sessions }: LogHistoryPanelProps) {
   };
 
   return (
-    <section className='card'>
+    <section className='card card-soft'>
       <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
         <h2 className='text-sm font-bold'>記録履歴</h2>
         <span className='font-mono text-[10px] tracking-[0.1em] text-sub'>LATEST {filtered.length}/{sessions.length}</span>

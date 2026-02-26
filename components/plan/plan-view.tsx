@@ -101,7 +101,7 @@ export function PlanView({ data }: PlanViewProps) {
       {message && <div className='card border border-success/30 bg-successLight p-3 text-sm text-success'>{message}</div>}
 
       <div className='grid grid-cols-[minmax(280px,1fr)_minmax(280px,1fr)] gap-4 max-lg:grid-cols-1'>
-        <div className='card'>
+        <div className='card card-soft'>
           <div className='mb-4 flex items-center justify-between'>
             <div>
               <p className='text-sm font-bold'>週間目標</p>
@@ -166,7 +166,7 @@ export function PlanView({ data }: PlanViewProps) {
           </Button>
         </div>
 
-        <div className='card'>
+        <div className='card card-soft'>
           <p className='mb-4 text-sm font-bold'>日別の配分</p>
           {schedules.map((day) => {
             const targetMin = day.target * 60;
@@ -208,7 +208,7 @@ export function PlanView({ data }: PlanViewProps) {
       </div>
 
       <div className='grid grid-cols-[minmax(280px,1fr)_minmax(280px,1fr)] gap-4 max-lg:grid-cols-1'>
-        <div className='card'>
+        <div className='card card-soft'>
           <div className='mb-2.5 flex items-center gap-2'>
             <Target size={16} color='var(--accent)' />
             <span className='text-xs font-bold tracking-[0.08em] text-sub'>FOCUS PLAN</span>
