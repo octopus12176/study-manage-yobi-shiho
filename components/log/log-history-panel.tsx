@@ -221,7 +221,7 @@ export function LogHistoryPanel({ sessions }: LogHistoryPanelProps) {
                 {session.memo && <p className='mt-1.5 rounded-lg bg-bg px-2.5 py-2 text-xs text-sub'>💭 {session.memo}</p>}
 
                 <p className='mt-1.5 text-[11px] text-muted'>
-                  {format(new Date(session.started_at), 'yyyy/MM/dd HH:mm')} - {format(new Date(session.ended_at), 'HH:mm')}
+                  {format(new Date(session.started_at), 'yyyy/MM/dd')}
                 </p>
               </article>
             );
