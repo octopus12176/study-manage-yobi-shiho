@@ -3,7 +3,7 @@
 import { CalendarCheck, Sparkles, Target } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
-import { updateWeeklyPlanAction } from '@/app/plan/actions';
+import { updateWeeklyPlanAction, generateWeeklyAISuggestionAction } from '@/app/plan/actions';
 import { Button } from '@/components/ui/button';
 import { MiniBar } from '@/components/ui/minibar';
 import { SUBJECTS } from '@/lib/constants';
@@ -11,6 +11,11 @@ import type { DashboardData } from '@/lib/dashboard';
 
 type PlanViewProps = {
   data: DashboardData;
+};
+
+type WeeklyAISuggestion = {
+  suggestion: string;
+  actionTags: string[];
 };
 
 export function PlanView({ data }: PlanViewProps) {
@@ -23,6 +28,8 @@ export function PlanView({ data }: PlanViewProps) {
   );
   const [message, setMessage] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [aiSuggestion, setAiSuggestion] = useState<WeeklyAISuggestion | null>(null);
+  const [isSuggestionPending, startSuggestionTransition] = useTransition();
 
   const actualHours = data.weeklyMinutes / 60;
   const progress = targetHours > 0 ? Math.min((actualHours / targetHours) * 100, 100) : 0;
@@ -63,6 +70,23 @@ export function PlanView({ data }: PlanViewProps) {
     setFocusedSubjectNames((prev) =>
       prev.includes(subject) ? prev.filter((s) => s !== subject) : [...prev, subject]
     );
+  };
+
+  const generateSuggestion = () => {
+    startSuggestionTransition(async () => {
+      try {
+        const result = await generateWeeklyAISuggestionAction(data);
+        setAiSuggestion(result);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('Failed to generate suggestion:', errorMessage);
+        // フォールバック提案を設定
+        setAiSuggestion({
+          suggestion: `今週は「${data.focusSubjects[0]?.subject ?? '行政法'}」が目標比で不足しています。来週は演習比率を +10% にして、重要論点を短答→論文の順で復習しましょう。`,
+          actionTags: ['重点科目強化', '演習重視'],
+        });
+      }
+    });
   };
 
   return (
@@ -343,15 +367,45 @@ export function PlanView({ data }: PlanViewProps) {
             <Sparkles size={16} color='var(--accent)' />
             <span className='text-xs font-bold tracking-[0.08em] text-white/50'>AI 週次提案</span>
           </div>
-          <p className='text-sm leading-[1.7] text-white/85'>
-            今週は「{focusSubject?.subject ?? '行政法'}」が目標比で不足しています。来週は演習比率を +10% にして、重要論点を短答→論文の順で復習しましょう。
-          </p>
-          <div className='mt-3 flex gap-2'>
-            <span className='rounded-md bg-accent/20 px-2.5 py-1 text-[11px] font-bold text-accent'>
-              {focusSubject?.subject ?? '行政法'} +10%
-            </span>
-            <span className='rounded-md bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/55'>演習重視</span>
-          </div>
+          {!aiSuggestion ? (
+            <div className='flex flex-col gap-3'>
+              <p className='text-sm text-white/70'>
+                ボタンをクリックして、あなたの学習パターンに基づいた来週の計画提案を受け取りましょう。
+              </p>
+              <Button
+                variant='accent'
+                size='sm'
+                onClick={generateSuggestion}
+                disabled={isSuggestionPending}
+                className='w-full'
+              >
+                {isSuggestionPending ? 'AI分析中...' : 'AI提案を生成'}
+              </Button>
+            </div>
+          ) : (
+            <>
+              <p className='text-sm leading-[1.7] text-white/85'>{aiSuggestion.suggestion}</p>
+              <div className='mt-3 flex flex-wrap gap-2'>
+                {aiSuggestion.actionTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className='rounded-md bg-accent/20 px-2.5 py-1 text-[11px] font-semibold text-accent'
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={generateSuggestion}
+                disabled={isSuggestionPending}
+                className='mt-2 text-white/70 hover:text-white'
+              >
+                {isSuggestionPending ? '更新中...' : '別の提案を生成'}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

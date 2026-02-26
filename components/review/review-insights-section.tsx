@@ -1,18 +1,68 @@
-import { Brain, Sparkles, Target, TriangleAlert } from 'lucide-react';
+'use client';
 
+import { Brain, Sparkles, Target, TriangleAlert } from 'lucide-react';
+import { useTransition } from 'react';
+
+import { generateReviewInsightsAction } from '@/app/review/actions';
+import { Button } from '@/components/ui/button';
 import { ConfDots } from '@/components/ui/confdots';
 import { Chip } from '@/components/ui/chip';
 import { MiniBar } from '@/components/ui/minibar';
 import type { DashboardData } from '@/lib/dashboard';
 import { buildSuggestion } from '@/lib/review/fallback';
-import { generateReviewInsights } from '@/lib/review/insights';
+import { buildFallbackInsights } from '@/lib/review/fallback';
+import type { ReviewInsights } from '@/lib/review/types';
+import { useState } from 'react';
 
 type ReviewInsightsSectionProps = {
   data: DashboardData;
 };
 
-export async function ReviewInsightsSection({ data }: ReviewInsightsSectionProps) {
-  const insights = await generateReviewInsights(data);
+export function ReviewInsightsSection({ data }: ReviewInsightsSectionProps) {
+  const [insights, setInsights] = useState<ReviewInsights | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGenerateInsights = () => {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const result = await generateReviewInsightsAction(data);
+        setInsights(result);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'AI提案の生成に失敗しました';
+        setError(errorMessage);
+        // フォールバック提案を表示
+        setInsights(buildFallbackInsights(data));
+      }
+    });
+  };
+
+  // 最初は提案を生成していない状態
+  if (!insights) {
+    return (
+      <div className='flex flex-col gap-4'>
+        <div className='card flex flex-col items-center justify-center gap-4 py-8'>
+          <div className='text-center'>
+            <Sparkles size={32} className='mx-auto mb-3 text-accent' />
+            <h3 className='font-semibold text-text'>AI提案を生成する</h3>
+            <p className='mt-1 text-sm text-sub'>ボタンをクリックして、あなたの学習パターンに基づいた復習提案を受け取りましょう。</p>
+          </div>
+          <Button
+            variant='accent'
+            onClick={handleGenerateInsights}
+            disabled={isPending}
+            className='w-full max-w-xs'
+          >
+            {isPending ? 'AI分析中...' : 'AI提案を生成'}
+          </Button>
+          {error && <p className='text-sm text-danger'>{error}</p>}
+        </div>
+      </div>
+    );
+  }
+
+  // ここからは提案が生成された後の表示
 
   const weeklyExerciseTarget = data.planRatios.exerciseRatio;
   const exerciseGap = data.exerciseRatio - weeklyExerciseTarget;
@@ -20,14 +70,27 @@ export async function ReviewInsightsSection({ data }: ReviewInsightsSectionProps
   const hasMemos = data.yesterdayMemos.length > 0;
 
   return (
-    <div
-      className={
-        hasMemos
-          ? 'grid grid-cols-[minmax(280px,1fr)_minmax(260px,0.9fr)] gap-4 max-lg:grid-cols-1'
-          : 'grid grid-cols-1 gap-4'
-      }
-    >
-      {hasMemos && (
+    <div className='flex flex-col gap-4'>
+      <div className='flex items-center justify-between rounded-lg bg-accentLight px-4 py-3'>
+        <span className='text-sm font-semibold text-accent'>AI提案が生成されました</span>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={handleGenerateInsights}
+          disabled={isPending}
+        >
+          {isPending ? '更新中...' : '更新'}
+        </Button>
+      </div>
+
+      <div
+        className={
+          hasMemos
+            ? 'grid grid-cols-[minmax(280px,1fr)_minmax(260px,0.9fr)] gap-4 max-lg:grid-cols-1'
+            : 'grid grid-cols-1 gap-4'
+        }
+      >
+        {hasMemos && (
         <div className='flex flex-col gap-3'>
           {data.yesterdayMemos.map((session) => (
             <div key={session.id} className='card'>
@@ -51,9 +114,9 @@ export async function ReviewInsightsSection({ data }: ReviewInsightsSectionProps
             </div>
           ))}
         </div>
-      )}
+        )}
 
-      <aside className='flex flex-col gap-3'>
+        <aside className='flex flex-col gap-3'>
         <div className='card card-soft'>
           <div className='mb-2 flex items-center gap-2'>
             <Target size={16} color='var(--accent)' />
@@ -99,9 +162,9 @@ export async function ReviewInsightsSection({ data }: ReviewInsightsSectionProps
             {insights.ronbunDiagnosis.templateHint}
           </div>
         </div>
-      </aside>
+        </aside>
 
-      <div className='card col-span-full bg-[linear-gradient(135deg,var(--dark),var(--darkSoft))] text-white'>
+        <div className='card col-span-full bg-[linear-gradient(135deg,var(--dark),var(--darkSoft))] text-white'>
         <div className='mb-2 flex items-center gap-2'>
           <Sparkles size={16} color='var(--accent)' />
           <span className='text-xs font-bold tracking-[0.08em] text-white/55'>WEEKLY SNAPSHOT</span>
@@ -115,6 +178,7 @@ export async function ReviewInsightsSection({ data }: ReviewInsightsSectionProps
               {tag}
             </span>
           ))}
+        </div>
         </div>
       </div>
     </div>
