@@ -1,4 +1,4 @@
-import { parseISO, subWeeks } from 'date-fns';
+import { addDays, endOfWeek, format, parseISO, startOfWeek, subWeeks } from 'date-fns';
 
 import { DEFAULT_WEEKLY_PLAN, SUBJECTS, WEEKDAY_LABELS } from '@/lib/constants';
 import { getTodayDateString, getWeekRange, getYesterdayDateString } from '@/lib/date';
@@ -31,6 +31,8 @@ export type DashboardData = {
   weekDates: string[];
   weekLabels: string[];
   dailyMinutes: Array<{ date: string; minutes: number }>;
+  heatmapDays: Array<{ date: string; minutes: number; sessions: number }>;
+  heatmapMaxMinutes: number;
   todaySessions: StudySessionRow[];
   recentSessions: StudySessionRow[];
   yesterdayMemos: StudySessionRow[];
@@ -97,6 +99,18 @@ const ACTIVITY_LABELS: Record<string, string> = {
   write: '答案作成',
 };
 
+const buildHeatmapRange = (baseDate: Date = new Date(), weeks = 26) => {
+  const start = startOfWeek(subWeeks(baseDate, weeks - 1), { weekStartsOn: 1 });
+  const end = endOfWeek(baseDate, { weekStartsOn: 1 });
+  const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const dates = Array.from({ length: days }, (_, idx) => format(addDays(start, idx), 'yyyy-MM-dd'));
+  return {
+    dates,
+    start: format(start, "yyyy-MM-dd'T'00:00:00XXX"),
+    end: format(end, "yyyy-MM-dd'T'23:59:59XXX"),
+  };
+};
+
 export const getDashboardData = async (): Promise<DashboardData> => {
   try {
     const plan = await getOrCreateWeeklyPlan();
@@ -104,10 +118,13 @@ export const getDashboardData = async (): Promise<DashboardData> => {
 
     const range = getWeekRange(new Date());
     const prevRange = getWeekRange(subWeeks(new Date(), 1));
-    const [weekSessions, previousWeekSessions, recentSessions] = await Promise.all([
+    const heatmapRange = buildHeatmapRange();
+    const heatmapDates = heatmapRange.dates;
+    const [weekSessions, previousWeekSessions, recentSessions, heatmapSessions] = await Promise.all([
       listStudySessionsInRange({ from: range.start, to: range.end, limit: 1000 }),
       listStudySessionsInRange({ from: prevRange.start, to: prevRange.end, limit: 1000 }),
       listRecentStudySessions(12),
+      listStudySessionsInRange({ from: heatmapRange.start, to: heatmapRange.end, limit: 10000 }),
     ]);
 
     const weekDates = buildWeekDates();
@@ -135,6 +152,22 @@ export const getDashboardData = async (): Promise<DashboardData> => {
         .filter((session) => session.started_at.startsWith(date))
         .reduce((acc, cur) => acc + cur.duration_min, 0),
     }));
+
+    const heatmapAggregate = new Map<string, { minutes: number; sessions: number }>();
+    heatmapSessions.forEach((session) => {
+      const dateKey = session.started_at.slice(0, 10);
+      const current = heatmapAggregate.get(dateKey) ?? { minutes: 0, sessions: 0 };
+      heatmapAggregate.set(dateKey, {
+        minutes: current.minutes + session.duration_min,
+        sessions: current.sessions + 1,
+      });
+    });
+    const heatmapDays = heatmapDates.map((date) => ({
+      date,
+      minutes: heatmapAggregate.get(date)?.minutes ?? 0,
+      sessions: heatmapAggregate.get(date)?.sessions ?? 0,
+    }));
+    const heatmapMaxMinutes = heatmapDays.reduce((max, day) => Math.max(max, day.minutes), 0);
 
     const subjectBreakdown = SUBJECTS.reduce<Record<string, number>>((acc, subject) => {
       acc[subject] = 0;
@@ -204,6 +237,8 @@ export const getDashboardData = async (): Promise<DashboardData> => {
       weekDates,
       weekLabels: [...WEEKDAY_LABELS],
       dailyMinutes,
+      heatmapDays,
+      heatmapMaxMinutes,
       todaySessions,
       recentSessions,
       yesterdayMemos,
@@ -224,6 +259,7 @@ export const getDashboardData = async (): Promise<DashboardData> => {
     };
   } catch {
     const weekDates = buildWeekDates();
+    const heatmapDates = buildHeatmapRange().dates;
     const subjectBreakdown = SUBJECTS.reduce<Record<string, number>>((acc, subject) => {
       acc[subject] = 0;
       return acc;
@@ -233,6 +269,8 @@ export const getDashboardData = async (): Promise<DashboardData> => {
       weekDates,
       weekLabels: [...WEEKDAY_LABELS],
       dailyMinutes: weekDates.map((date) => ({ date, minutes: 0 })),
+      heatmapDays: heatmapDates.map((date) => ({ date, minutes: 0, sessions: 0 })),
+      heatmapMaxMinutes: 0,
       todaySessions: [],
       recentSessions: [],
       yesterdayMemos: [],

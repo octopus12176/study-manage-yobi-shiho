@@ -3,6 +3,7 @@ import { ArrowUpRight, Flame, Radar, Sparkles, TriangleAlert } from 'lucide-reac
 
 import { ConfDots } from '@/components/ui/confdots';
 import { MiniBar } from '@/components/ui/minibar';
+import { StudyHeatmap } from '@/components/dashboard/study-heatmap';
 import type { DashboardData } from '@/lib/dashboard';
 
 type DashboardViewProps = {
@@ -256,6 +257,14 @@ export function DashboardView({ data }: DashboardViewProps) {
             );
           })}
         </div>
+      </div>
+
+      <div className='card'>
+        <div className='mb-3 flex items-center justify-between'>
+          <p className='text-sm font-bold'>学習ヒートマップ</p>
+          <span className='text-[11px] text-sub'>直近半年</span>
+        </div>
+        <StudyHeatmap days={data.heatmapDays} maxMinutes={data.heatmapMaxMinutes} />
       </div>
 
       <div className='grid grid-cols-[minmax(280px,1fr)_minmax(280px,1fr)] gap-4 max-lg:grid-cols-1'>
