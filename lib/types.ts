@@ -17,6 +17,7 @@ export type StudySession = {
   activity: Activity;
   confidence: number | null;
   memo: string | null;
+  cause_category: string | null;
   created_at: string;
 };
 

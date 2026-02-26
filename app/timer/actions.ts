@@ -31,6 +31,7 @@ export async function saveTimerSessionAction(input: SaveTimerSessionInput) {
     activity: 'drill',
     confidence: 3,
     memo: null,
+    cause_category: null,
   });
 
   if (input.mode === 'pomodoro') {

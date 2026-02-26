@@ -13,6 +13,7 @@ export type LogFormInput = {
   minutes: number;
   confidence: number;
   memo: string;
+  causeCategory?: string;
 };
 
 export async function createStudySessionAction(payload: LogFormInput) {
@@ -34,6 +35,7 @@ export async function createStudySessionAction(payload: LogFormInput) {
     activity: payload.activity,
     confidence: payload.confidence,
     memo: payload.memo || null,
+    cause_category: payload.causeCategory || null,
   });
 
   revalidatePath('/');

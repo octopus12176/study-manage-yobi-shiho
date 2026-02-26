@@ -52,7 +52,8 @@ export function LogHistoryPanel({ sessions }: LogHistoryPanelProps) {
       return (
         session.subject.toLowerCase().includes(q) ||
         (session.material ?? '').toLowerCase().includes(q) ||
-        (session.memo ?? '').toLowerCase().includes(q)
+        (session.memo ?? '').toLowerCase().includes(q) ||
+        (session.cause_category ?? '').toLowerCase().includes(q)
       );
     });
   }, [activity, query, sessions, subject, track]);
@@ -177,6 +178,11 @@ export function LogHistoryPanel({ sessions }: LogHistoryPanelProps) {
                     <span className='rounded-md bg-bg px-1.5 py-0.5 text-[10px] text-sub'>
                       {activityLabelMap[session.activity] ?? session.activity}
                     </span>
+                    {session.cause_category && (
+                      <span className='rounded-md bg-accentLight px-1.5 py-0.5 text-[10px] text-accent'>
+                        {session.cause_category}
+                      </span>
+                    )}
                   </div>
                   <div className='flex items-center gap-2'>
                     <span

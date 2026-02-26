@@ -36,6 +36,18 @@ export const ACTIVITY_OPTIONS = [
   { value: 'write', label: '答案作成' },
 ] as const;
 
+export const CAUSE_CATEGORIES = [
+  '規範の言語化不足',
+  'あてはめが薄い',
+  '要件の拾い漏れ',
+  '理由付けが弱い',
+  '答案構成が弱い',
+  '時間配分ミス',
+  '論点選択ミス',
+  '事実評価ミス',
+  'その他',
+] as const;
+
 export const WEEKDAY_LABELS = ['月', '火', '水', '木', '金', '土', '日'] as const;
 
 export const DEFAULT_WEEKLY_PLAN = {

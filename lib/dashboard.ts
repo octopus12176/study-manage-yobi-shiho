@@ -50,6 +50,7 @@ export type DashboardData = {
   coverageCount: number;
   focusSubjects: FocusSubject[];
   activityMix: ActivityMix[];
+  ronbunCauseCounts: Array<{ category: string; count: number; pct: number }>;
 };
 
 const fallbackPlanRatios: WeeklyPlanRatios = {
@@ -220,6 +221,24 @@ export const getDashboardData = async (): Promise<DashboardData> => {
       reviewCounter.set(key, (reviewCounter.get(key) ?? 0) + 1);
     });
 
+    const ronbunSessions = weekSessions.filter((session) => session.track === 'ronbun');
+    const ronbunCauseCounter = new Map<string, number>();
+    ronbunSessions.forEach((session) => {
+      if (!session.cause_category) return;
+      ronbunCauseCounter.set(
+        session.cause_category,
+        (ronbunCauseCounter.get(session.cause_category) ?? 0) + 1
+      );
+    });
+    const ronbunCauseTotal = [...ronbunCauseCounter.values()].reduce((acc, val) => acc + val, 0);
+    const ronbunCauseCounts = [...ronbunCauseCounter.entries()]
+      .map(([category, count]) => ({
+        category,
+        count,
+        pct: ronbunCauseTotal > 0 ? Math.round((count / ronbunCauseTotal) * 100) : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+
     const weakPoints = [...weakCounter.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
     const reviewPattern = [...reviewCounter.entries()].sort((a, b) => b[1] - a[1]);
 
@@ -256,6 +275,7 @@ export const getDashboardData = async (): Promise<DashboardData> => {
       coverageCount,
       focusSubjects,
       activityMix,
+      ronbunCauseCounts,
     };
   } catch {
     const weekDates = buildWeekDates();
@@ -301,6 +321,7 @@ export const getDashboardData = async (): Promise<DashboardData> => {
         gapPct: fallbackPlanRatios.subjectRatios[subject] ?? 0,
       })).slice(0, 3),
       activityMix: [],
+      ronbunCauseCounts: [],
     };
   }
 };

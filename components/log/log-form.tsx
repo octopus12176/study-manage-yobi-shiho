@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   ACTIVITY_OPTIONS,
+  CAUSE_CATEGORIES,
   DEFAULT_LOG_MINUTES,
   EXAM_OPTIONS,
   MATERIALS,
@@ -31,6 +32,7 @@ const defaultPayload: LogFormInput = {
   minutes: 60,
   confidence: 3,
   memo: '',
+  causeCategory: '',
 };
 
 export function LogForm({ defaultSubject }: LogFormProps) {
@@ -43,7 +45,9 @@ export function LogForm({ defaultSubject }: LogFormProps) {
 
   const submit = () => {
     startTransition(async () => {
-      const result = await createStudySessionAction(payload);
+      const normalized =
+        payload.track === 'ronbun' ? payload : { ...payload, causeCategory: '' };
+      const result = await createStudySessionAction(normalized);
       setMessage(result.message);
       if (result.ok) {
         setPayload((prev) => ({ ...defaultPayload, subject: prev.subject }));
@@ -200,6 +204,27 @@ export function LogForm({ defaultSubject }: LogFormProps) {
             value={payload.memo}
             onChange={(event) => setPayload((prev) => ({ ...prev, memo: event.target.value }))}
           />
+        </div>
+
+        <div className='rounded-2xl border border-borderLight bg-[rgba(255,255,255,0.76)] p-4'>
+          <Label>原因カテゴリ（論文の弱点）</Label>
+          <p className='mb-2 text-[11px] text-sub'>論文トラックのみ任意で選択してください。</p>
+          <div className='flex flex-wrap gap-1.5'>
+            {CAUSE_CATEGORIES.map((item) => (
+              <Chip
+                key={item}
+                label={item}
+                small
+                active={payload.causeCategory === item}
+                onClick={() =>
+                  setPayload((prev) => ({
+                    ...prev,
+                    causeCategory: prev.causeCategory === item ? '' : item,
+                  }))
+                }
+              />
+            ))}
+          </div>
         </div>
 
         <Button

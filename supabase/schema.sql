@@ -13,6 +13,7 @@ create table if not exists public.study_sessions (
   activity text not null check (activity in ('input', 'drill', 'review', 'write')),
   confidence int check (confidence between 1 and 5),
   memo text,
+  cause_category text,
   created_at timestamptz not null default now()
 );
 

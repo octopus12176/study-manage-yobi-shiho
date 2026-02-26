@@ -17,6 +17,7 @@ export type Database = {
           activity: 'input' | 'drill' | 'review' | 'write';
           confidence: number | null;
           memo: string | null;
+          cause_category: string | null;
           created_at: string;
         };
         Insert: {
@@ -32,6 +33,7 @@ export type Database = {
           activity: 'input' | 'drill' | 'review' | 'write';
           confidence?: number | null;
           memo?: string | null;
+          cause_category?: string | null;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['study_sessions']['Insert']>;

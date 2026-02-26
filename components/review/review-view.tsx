@@ -4,24 +4,19 @@ import { ConfDots } from '@/components/ui/confdots';
 import { Chip } from '@/components/ui/chip';
 import { MiniBar } from '@/components/ui/minibar';
 import type { DashboardData } from '@/lib/dashboard';
+import { buildSuggestion } from '@/lib/review/fallback';
+import type { ReviewInsights } from '@/lib/review/types';
 
 type ReviewViewProps = {
   data: DashboardData;
+  insights: ReviewInsights;
 };
 
-const buildSuggestion = (memo: string | null): string => {
-  if (!memo) return '関連論点テンプレを見直し、規範の正確性を確認しましょう。';
-  if (memo.includes('処分性')) return '処分性の定義を自分の言葉で書き直し、判例3つの要点を整理しましょう。';
-  if (memo.includes('原告適格')) return '原告適格の判断枠組みを答案構成形式で再整理してみましょう。';
-  if (memo.includes('あてはめ')) return '過去問1問のあてはめ部分だけを書き直して密度を上げましょう。';
-  if (memo.includes('時間')) return '答案構成の時間配分パターンを固定し、タイムトライアルで再現しましょう。';
-  return '関連する弱点論点を30分復習し、次の演習で確認しましょう。';
-};
-
-export function ReviewView({ data }: ReviewViewProps) {
+export function ReviewView({ data, insights }: ReviewViewProps) {
   const weeklyExerciseTarget = data.planRatios.exerciseRatio;
   const exerciseGap = data.exerciseRatio - weeklyExerciseTarget;
   const topMemo = data.yesterdayMemos[0];
+  const memoFeedbackMap = new Map(insights.memoFeedbacks.map((item) => [item.id, item]));
 
   return (
     <div className='flex flex-col gap-4'>
@@ -99,9 +94,16 @@ export function ReviewView({ data }: ReviewViewProps) {
                 <span className='text-[11px] text-sub'>体感 {session.confidence ?? 3}</span>
               </div>
               <p className='mb-2 text-[13px] text-sub'>詰まり: {session.memo}</p>
+              {memoFeedbackMap.get(session.id)?.feedback && (
+                <p className='mb-2 text-[12px] font-semibold text-text'>
+                  AI一言: {memoFeedbackMap.get(session.id)?.feedback}
+                </p>
+              )}
               <div className='rounded-[10px] border-l-[3px] border-l-accent bg-accentLight px-3.5 py-3'>
                 <p className='mb-1 text-[11px] font-bold text-accent'>提案</p>
-                <p className='text-[13px] leading-[1.6] text-text'>{buildSuggestion(session.memo)}</p>
+                <p className='text-[13px] leading-[1.6] text-text'>
+                  {memoFeedbackMap.get(session.id)?.nextTask ?? buildSuggestion(session.memo)}
+                </p>
               </div>
             </div>
           ))}
@@ -137,6 +139,22 @@ export function ReviewView({ data }: ReviewViewProps) {
               </div>
             )}
           </div>
+
+          <div className='card'>
+            <div className='mb-2 flex items-center gap-2'>
+              <Brain size={16} color='var(--accent2)' />
+              <p className='text-sm font-bold'>論文の弱点診断</p>
+            </div>
+            <p className='text-[12px] text-sub'>{insights.ronbunDiagnosis.biasSummary}</p>
+            <ul className='mt-2 space-y-1 text-[12px] text-text'>
+              {insights.ronbunDiagnosis.actions.map((action) => (
+                <li key={action}>・{action}</li>
+              ))}
+            </ul>
+            <div className='mt-2 rounded-lg bg-bg px-2.5 py-2 text-[11px] text-sub'>
+              {insights.ronbunDiagnosis.templateHint}
+            </div>
+          </div>
         </aside>
       </div>
 
@@ -145,10 +163,16 @@ export function ReviewView({ data }: ReviewViewProps) {
           <Sparkles size={16} color='var(--accent)' />
           <span className='text-xs font-bold tracking-[0.08em] text-white/55'>WEEKLY SNAPSHOT</span>
         </div>
-        <p className='text-sm leading-[1.7] text-white/85'>
-          今週の演習比率は {data.exerciseRatio}% です。目標 {data.planRatios.exerciseRatio}% に近づけるため、明日は答案作成を
-          1コマ追加してください。
-        </p>
+        <p className='text-sm leading-[1.7] text-white/85'>{insights.weeklyReview.summary}</p>
+        <p className='mt-2 text-[12px] text-white/70'>{insights.weeklyReview.gapNote}</p>
+        <p className='mt-2 text-[12px] text-white/85'>{insights.weeklyReview.nextWeekAllocation}</p>
+        <div className='mt-3 flex flex-wrap gap-2'>
+          {insights.weeklyReview.actionTags.map((tag) => (
+            <span key={tag} className='rounded-md bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/70'>
+              {tag}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
