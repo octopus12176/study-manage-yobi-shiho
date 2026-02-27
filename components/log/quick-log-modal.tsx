@@ -35,7 +35,7 @@ export function QuickLogModal({
   // 必須フィールド
   const [subject, setSubject] = useState('');
   const [minutes, setMinutes] = useState(60);
-  const [exam, setExam] = useState<'yobi' | 'shiho' | 'both'>('both');
+  const [exam, setExam] = useState<'yobi' | 'shiho' | 'both'>('yobi');
   const [track, setTrack] = useState<'tantou' | 'ronbun' | 'review' | 'mock' | 'other'>('ronbun');
   const [activity, setActivity] = useState<'input' | 'drill' | 'review' | 'write'>('drill');
   const [confidence, setConfidence] = useState(3);
@@ -60,7 +60,7 @@ export function QuickLogModal({
       setSubject(initialSubject || '');
       setMinutes(initialMinutes || 60);
       setCustomMinutes(initialMinutes ? String(initialMinutes) : '');
-      setExam('both');
+      setExam('yobi');
       setTrack('ronbun');
       setActivity('drill');
       setConfidence(3);
