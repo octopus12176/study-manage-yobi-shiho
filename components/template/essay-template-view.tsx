@@ -202,7 +202,7 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
   return (
     <>
       {/* ボタンとフィルター */}
-      <div className='flex flex-col gap-4'>
+      <div className='flex flex-col gap-4 mb-8'>
         <Button onClick={handleOpenModal} className='w-fit'>
           ＋ テンプレ追加
         </Button>
