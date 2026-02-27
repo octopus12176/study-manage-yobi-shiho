@@ -36,7 +36,7 @@ export const uuidSchema = z.string().uuid('Invalid UUID format');
 
 export const logFormSchema = z.object({
   subject: subjectSchema,
-  material: z.enum(materialValues),
+  material: z.union([z.enum(materialValues), z.literal('')]).optional().default(''),
   exam: examSchema,
   track: trackSchema,
   activity: activitySchema,

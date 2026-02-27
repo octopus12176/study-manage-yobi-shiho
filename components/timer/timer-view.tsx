@@ -1,15 +1,15 @@
 'use client';
 
 import { Coffee, Pause, Play, Settings, SkipForward, Target, Timer, Undo2, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { saveTimerSessionAction } from '@/app/timer/actions';
 import { Chip } from '@/components/ui/chip';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SUBJECTS } from '@/lib/constants';
 import { formatTimer } from '@/lib/date';
 import { TimerRing } from '@/components/timer/timer-ring';
+import { QuickLogModal } from '@/components/log/quick-log-modal';
 
 export function TimerView() {
   const [mode, setMode] = useState<'normal' | 'pomodoro'>('normal');
@@ -27,9 +27,8 @@ export function TimerView() {
 
   const [subject, setSubject] = useState('');
   const [showSettings, setShowSettings] = useState(false);
-  const [showComplete, setShowComplete] = useState(false);
-  const [resultMessage, setResultMessage] = useState('');
-  const [isPending, startTransition] = useTransition();
+  const [showQuickLog, setShowQuickLog] = useState(false);
+  const [timerSessionContext, setTimerSessionContext] = useState<{ startedAt: string; endedAt: string } | null>(null);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -116,7 +115,13 @@ export function TimerView() {
   const handleReset = () => {
     setIsRunning(false);
     if (totalWorked > 60) {
-      setShowComplete(true);
+      const endedAt = new Date();
+      const startedAt = new Date(endedAt.getTime() - totalWorked * 1000);
+      setTimerSessionContext({
+        startedAt: startedAt.toISOString(),
+        endedAt: endedAt.toISOString(),
+      });
+      setShowQuickLog(true);
       return;
     }
     resetAll();
@@ -141,31 +146,6 @@ export function TimerView() {
 
     setPomodoroPhase('work');
     setRemaining(workMin * 60);
-  };
-
-  const handleSaveSession = () => {
-    const minutes = Math.round(totalWorked / 60);
-    if (!subject || minutes <= 0) return;
-
-    const endedAt = new Date();
-    const startedAt = new Date(endedAt.getTime() - totalWorked * 1000);
-
-    startTransition(async () => {
-      const result = await saveTimerSessionAction({
-        subject,
-        minutes,
-        mode,
-        workMin,
-        breakMin: shortBreakMin,
-        cycles: pomodoroCount,
-        startedAt: startedAt.toISOString(),
-        endedAt: endedAt.toISOString(),
-      });
-
-      setResultMessage(result.message);
-      setShowComplete(false);
-      resetAll();
-    });
   };
 
   const displayTime = mode === 'normal' ? elapsed : remaining;
@@ -251,7 +231,6 @@ export function TimerView() {
         </div>
       </section>
 
-      {resultMessage && <div className='card border border-success/30 bg-successLight p-3 text-sm text-success'>{resultMessage}</div>}
 
       <div className='grid grid-cols-[minmax(320px,1fr)_minmax(260px,0.9fr)] gap-4 max-lg:grid-cols-1'>
         <Card className='p-5'>
@@ -437,53 +416,27 @@ export function TimerView() {
         </div>
       </div>
 
-      {showComplete && (
-        <div className='overlay' onClick={() => setShowComplete(false)}>
-          <div className='modal text-center' onClick={(event) => event.stopPropagation()}>
-            <div className='mb-5 animate-[ringBounce_0.5s_ease]'>
-              <div className='mx-auto flex size-[72px] items-center justify-center rounded-full bg-success'>
-                <Target size={32} color='white' />
-              </div>
-            </div>
-            <p className='mb-2 text-xl font-black'>お疲れさまでした</p>
-            <p className='font-mono text-4xl font-black text-accent'>
-              {Math.round(totalWorked / 60)}
-              <span className='ml-1 font-sans text-base text-sub'>分</span>
-              {mode === 'pomodoro' && <span className='ml-2 font-sans text-base text-sub'>🍅×{pomodoroCount}</span>}
-            </p>
-
-            <div className='mt-5 text-left'>
-              <p className='mb-2 text-xs font-semibold text-sub'>科目を選択して記録</p>
-              <div className='flex flex-wrap justify-center gap-1.5'>
-                {SUBJECTS.map((name) => (
-                  <Chip key={`finish-${name}`} label={name} active={subject === name} onClick={() => setSubject(name)} />
-                ))}
-              </div>
-            </div>
-
-            <div className='mt-6 flex gap-2.5'>
-              <Button
-                variant='secondary'
-                className='flex-1'
-                onClick={() => {
-                  setShowComplete(false);
-                  resetAll();
-                }}
-              >
-                記録しない
-              </Button>
-              <Button
-                variant='accent'
-                className='flex-1'
-                disabled={!subject || isPending}
-                onClick={handleSaveSession}
-              >
-                {isPending ? '保存中...' : '記録する'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <QuickLogModal
+        open={showQuickLog}
+        onClose={() => {
+          setShowQuickLog(false);
+          resetAll();
+        }}
+        initialSubject={subject}
+        initialMinutes={Math.round(totalWorked / 60)}
+        pomodoroContext={mode === 'pomodoro' && timerSessionContext ? {
+          mode,
+          workMin,
+          breakMin: shortBreakMin,
+          cycles: pomodoroCount,
+          startedAt: timerSessionContext.startedAt,
+          endedAt: timerSessionContext.endedAt,
+        } : undefined}
+        onSuccess={() => {
+          setShowQuickLog(false);
+          resetAll();
+        }}
+      />
 
       {showSettings && (
         <div className='overlay' onClick={() => setShowSettings(false)}>

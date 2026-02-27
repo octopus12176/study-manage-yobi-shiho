@@ -37,7 +37,7 @@ export async function createStudySessionAction(payload: LogFormInput) {
   }
   const startedAt = new Date(endedAt.getTime() - data.minutes * 60_000);
 
-  await createStudySession({
+  const session = await createStudySession({
     started_at: startedAt.toISOString(),
     ended_at: endedAt.toISOString(),
     duration_min: data.minutes,
@@ -56,7 +56,7 @@ export async function createStudySessionAction(payload: LogFormInput) {
   revalidatePath('/log');
   revalidatePath('/review');
 
-  return { ok: true as const, message: '学習記録を保存しました。' };
+  return { ok: true as const, message: '学習記録を保存しました。', sessionId: session.id };
 }
 
 export async function updateStudySessionAction(id: string, payload: LogFormInput) {
