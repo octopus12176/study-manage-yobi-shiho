@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { createPomodoroRun, createStudySession } from '@/lib/supabase/queries';
+import { timerSessionSchema, formatZodError } from '@/lib/validation';
 
 type SaveTimerSessionInput = {
   subject: string;
@@ -16,17 +17,20 @@ type SaveTimerSessionInput = {
 };
 
 export async function saveTimerSessionAction(input: SaveTimerSessionInput) {
-  if (!input.subject || input.minutes <= 0) {
-    return { ok: false as const, message: '科目と学習時間を入力してください。' };
+  // Zod によるランタイムバリデーション
+  const result = timerSessionSchema.safeParse(input);
+  if (!result.success) {
+    return formatZodError(result.error);
   }
+  const data = result.data;
 
   const session = await createStudySession({
-    started_at: input.startedAt,
-    ended_at: input.endedAt,
-    duration_min: input.minutes,
+    started_at: data.startedAt,
+    ended_at: data.endedAt,
+    duration_min: data.minutes,
     exam: 'both',
     track: 'review',
-    subject: input.subject,
+    subject: data.subject,
     material: 'タイマー',
     activity: 'drill',
     confidence: 3,
@@ -34,14 +38,14 @@ export async function saveTimerSessionAction(input: SaveTimerSessionInput) {
     cause_category: null,
   });
 
-  if (input.mode === 'pomodoro') {
+  if (data.mode === 'pomodoro') {
     await createPomodoroRun({
       study_session_id: session.id,
-      work_min: input.workMin,
-      break_min: input.breakMin,
-      cycles: Math.max(input.cycles, 1),
-      started_at: input.startedAt,
-      ended_at: input.endedAt,
+      work_min: data.workMin,
+      break_min: data.breakMin,
+      cycles: data.cycles,
+      started_at: data.startedAt,
+      ended_at: data.endedAt,
     });
   }
 

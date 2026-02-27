@@ -7,6 +7,7 @@ import { DEFAULT_WEEKLY_PLAN } from '@/lib/constants';
 import { upsertWeeklyPlan } from '@/lib/supabase/queries';
 import type { DashboardData } from '@/lib/dashboard';
 import { createOpenAIResponse, getOpenAIKey, getOpenAIModel } from '@/lib/openai';
+import { weeklyPlanSchema, formatZodError } from '@/lib/validation';
 
 type WeeklyAISuggestion = {
   suggestion: string;
@@ -23,27 +24,34 @@ type UpdateWeeklyPlanInput = {
 
 export async function updateWeeklyPlanAction(input: UpdateWeeklyPlanInput) {
   try {
+    // Zod によるランタイムバリデーション
+    const result = weeklyPlanSchema.safeParse(input);
+    if (!result.success) {
+      return formatZodError(result.error);
+    }
+    const data = result.data;
+
     const normalized = startOfWeek(new Date(), { weekStartsOn: 1 });
 
     console.log('Updating weekly plan with:', {
       date: normalized.toISOString(),
-      targetMin: Math.max(Math.round(input.targetHours * 60), 0),
+      targetMin: Math.round(data.targetHours * 60),
       ratios: {
-        weekdayHours: input.weekdayHours,
-        weekendHours: input.weekendHours,
-        exerciseRatio: input.exerciseRatio,
+        weekdayHours: data.weekdayHours,
+        weekendHours: data.weekendHours,
+        exerciseRatio: data.exerciseRatio,
       },
     });
 
     await upsertWeeklyPlan({
       date: normalized,
-      targetMin: Math.max(Math.round(input.targetHours * 60), 0),
+      targetMin: Math.round(data.targetHours * 60),
       ratios: {
-        weekdayHours: input.weekdayHours,
-        weekendHours: input.weekendHours,
-        exerciseRatio: input.exerciseRatio,
+        weekdayHours: data.weekdayHours,
+        weekendHours: data.weekendHours,
+        exerciseRatio: data.exerciseRatio,
         subjectRatios: DEFAULT_WEEKLY_PLAN.subjectRatios,
-        focusedSubjectNames: input.focusedSubjectNames,
+        focusedSubjectNames: data.focusedSubjectNames,
       },
     });
 

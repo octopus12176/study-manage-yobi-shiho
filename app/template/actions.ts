@@ -9,6 +9,8 @@ import {
   deleteLegalConcept,
   updateLegalConcept,
 } from '@/lib/supabase/queries';
+import { essayTemplateSchema, legalConceptSchema, formatZodError } from '@/lib/validation';
+import { sanitizeHtmlServer } from '@/lib/sanitize-server';
 
 export type EssayTemplateInput = {
   subject: string;
@@ -20,17 +22,20 @@ export type EssayTemplateInput = {
 };
 
 export async function createEssayTemplateAction(payload: EssayTemplateInput) {
-  if (!payload.subject || !payload.title) {
-    return { ok: false as const, message: '科目と論点名は必須です。' };
+  // Zod によるランタイムバリデーション
+  const result = essayTemplateSchema.safeParse(payload);
+  if (!result.success) {
+    return formatZodError(result.error);
   }
+  const data = result.data;
 
   await createEssayTemplate({
-    subject: payload.subject,
-    title: payload.title,
-    template: payload.template || null,
-    norm: payload.norm || null,
-    pitfall: payload.pitfall || null,
-    rank: payload.rank,
+    subject: data.subject,
+    title: data.title,
+    template: sanitizeHtmlServer(data.template) || null,
+    norm: sanitizeHtmlServer(data.norm) || null,
+    pitfall: sanitizeHtmlServer(data.pitfall) || null,
+    rank: data.rank,
   });
 
   revalidatePath('/template');
@@ -39,17 +44,20 @@ export async function createEssayTemplateAction(payload: EssayTemplateInput) {
 }
 
 export async function updateEssayTemplateAction(id: string, payload: EssayTemplateInput) {
-  if (!payload.subject || !payload.title) {
-    return { ok: false as const, message: '科目と論点名は必須です。' };
+  // Zod によるランタイムバリデーション
+  const result = essayTemplateSchema.safeParse(payload);
+  if (!result.success) {
+    return formatZodError(result.error);
   }
+  const data = result.data;
 
   await updateEssayTemplate(id, {
-    subject: payload.subject,
-    title: payload.title,
-    template: payload.template || null,
-    norm: payload.norm || null,
-    pitfall: payload.pitfall || null,
-    rank: payload.rank,
+    subject: data.subject,
+    title: data.title,
+    template: sanitizeHtmlServer(data.template) || null,
+    norm: sanitizeHtmlServer(data.norm) || null,
+    pitfall: sanitizeHtmlServer(data.pitfall) || null,
+    rank: data.rank,
   });
 
   revalidatePath('/template');
@@ -73,17 +81,20 @@ export type LegalConceptInput = {
 };
 
 export async function createLegalConceptAction(payload: LegalConceptInput) {
-  if (!payload.subject || !payload.title) {
-    return { ok: false as const, message: '科目と概念名は必須です。' };
+  // Zod によるランタイムバリデーション
+  const result = legalConceptSchema.safeParse(payload);
+  if (!result.success) {
+    return formatZodError(result.error);
   }
+  const data = result.data;
 
   await createLegalConcept({
-    subject: payload.subject,
-    category: payload.category || 'その他',
-    title: payload.title,
-    summary: payload.summary || null,
-    framework: payload.framework || null,
-    notes: payload.notes || null,
+    subject: data.subject,
+    category: data.category,
+    title: data.title,
+    summary: sanitizeHtmlServer(data.summary) || null,
+    framework: sanitizeHtmlServer(data.framework) || null,
+    notes: sanitizeHtmlServer(data.notes) || null,
   });
 
   revalidatePath('/template');
@@ -92,17 +103,20 @@ export async function createLegalConceptAction(payload: LegalConceptInput) {
 }
 
 export async function updateLegalConceptAction(id: string, payload: LegalConceptInput) {
-  if (!payload.subject || !payload.title) {
-    return { ok: false as const, message: '科目と概念名は必須です。' };
+  // Zod によるランタイムバリデーション
+  const result = legalConceptSchema.safeParse(payload);
+  if (!result.success) {
+    return formatZodError(result.error);
   }
+  const data = result.data;
 
   await updateLegalConcept(id, {
-    subject: payload.subject,
-    category: payload.category || 'その他',
-    title: payload.title,
-    summary: payload.summary || null,
-    framework: payload.framework || null,
-    notes: payload.notes || null,
+    subject: data.subject,
+    category: data.category,
+    title: data.title,
+    summary: sanitizeHtmlServer(data.summary) || null,
+    framework: sanitizeHtmlServer(data.framework) || null,
+    notes: sanitizeHtmlServer(data.notes) || null,
   });
 
   revalidatePath('/template');

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { createStudySession, updateStudySession, deleteStudySession } from '@/lib/supabase/queries';
+import { logFormSchema, formatZodError } from '@/lib/validation';
 
 export type LogFormInput = {
   subject: string;
@@ -19,33 +20,36 @@ export type LogFormInput = {
 };
 
 export async function createStudySessionAction(payload: LogFormInput) {
-  if (!payload.subject || !payload.material || payload.minutes <= 0) {
-    return { ok: false as const, message: '必須項目を入力してください。' };
+  // Zod によるランタイムバリデーション
+  const result = logFormSchema.safeParse(payload);
+  if (!result.success) {
+    return formatZodError(result.error);
   }
+  const data = result.data;
 
   let endedAt: Date;
-  if (payload.date) {
+  if (data.date) {
     // 指定された日付の 23:59:59 を終了時刻とする
-    endedAt = new Date(`${payload.date}T23:59:59`);
+    endedAt = new Date(`${data.date}T23:59:59`);
   } else {
     // 日付が指定されていなければ現在時刻
     endedAt = new Date();
   }
-  const startedAt = new Date(endedAt.getTime() - payload.minutes * 60_000);
+  const startedAt = new Date(endedAt.getTime() - data.minutes * 60_000);
 
   await createStudySession({
     started_at: startedAt.toISOString(),
     ended_at: endedAt.toISOString(),
-    duration_min: payload.minutes,
-    exam: payload.exam,
-    track: payload.track,
-    subject: payload.subject,
-    material: payload.material,
-    activity: payload.activity,
-    confidence: payload.confidence,
-    memo: payload.memo || null,
-    notes: payload.notes || null,
-    cause_category: payload.causeCategory || null,
+    duration_min: data.minutes,
+    exam: data.exam as 'yobi' | 'shiho' | 'both',
+    track: data.track as 'tantou' | 'ronbun' | 'review' | 'mock' | 'other',
+    subject: data.subject,
+    material: data.material,
+    activity: data.activity as 'input' | 'drill' | 'review' | 'write',
+    confidence: data.confidence,
+    memo: data.memo || null,
+    notes: data.notes || null,
+    cause_category: data.causeCategory || null,
   });
 
   revalidatePath('/');
@@ -56,31 +60,34 @@ export async function createStudySessionAction(payload: LogFormInput) {
 }
 
 export async function updateStudySessionAction(id: string, payload: LogFormInput) {
-  if (!payload.subject || !payload.material || payload.minutes <= 0) {
-    return { ok: false as const, message: '必須項目を入力してください。' };
+  // Zod によるランタイムバリデーション
+  const result = logFormSchema.safeParse(payload);
+  if (!result.success) {
+    return formatZodError(result.error);
   }
+  const data = result.data;
 
   let endedAt: Date;
-  if (payload.date) {
-    endedAt = new Date(`${payload.date}T23:59:59`);
+  if (data.date) {
+    endedAt = new Date(`${data.date}T23:59:59`);
   } else {
     endedAt = new Date();
   }
-  const startedAt = new Date(endedAt.getTime() - payload.minutes * 60_000);
+  const startedAt = new Date(endedAt.getTime() - data.minutes * 60_000);
 
   await updateStudySession(id, {
     started_at: startedAt.toISOString(),
     ended_at: endedAt.toISOString(),
-    duration_min: payload.minutes,
-    exam: payload.exam,
-    track: payload.track,
-    subject: payload.subject,
-    material: payload.material,
-    activity: payload.activity,
-    confidence: payload.confidence,
-    memo: payload.memo || null,
-    notes: payload.notes || null,
-    cause_category: payload.causeCategory || null,
+    duration_min: data.minutes,
+    exam: data.exam as 'yobi' | 'shiho' | 'both',
+    track: data.track as 'tantou' | 'ronbun' | 'review' | 'mock' | 'other',
+    subject: data.subject,
+    material: data.material,
+    activity: data.activity as 'input' | 'drill' | 'review' | 'write',
+    confidence: data.confidence,
+    memo: data.memo || null,
+    notes: data.notes || null,
+    cause_category: data.causeCategory || null,
   });
 
   revalidatePath('/');
