@@ -87,7 +87,7 @@ export function EssayTemplateView({
     template: '',
     norm: '',
     pitfall: '',
-    rank: 'C',
+    rank: 'A',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,7 +110,7 @@ export function EssayTemplateView({
     template: '',
     norm: '',
     pitfall: '',
-    rank: 'C',
+    rank: 'A',
   });
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [editSubmitError, setEditSubmitError] = useState('');
@@ -145,7 +145,7 @@ export function EssayTemplateView({
       template: '',
       norm: '',
       pitfall: '',
-      rank: 'C',
+      rank: 'A',
     });
     setSubmitError('');
     setIsModalOpen(true);
