@@ -109,6 +109,31 @@ export type Database = {
         };
         Update: Partial<Database['public']['Tables']['essay_templates']['Insert']>;
       };
+      legal_concepts: {
+        Row: {
+          id: string;
+          user_id: string;
+          subject: string;
+          category: string;
+          title: string;
+          summary: string | null;
+          framework: string | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          subject: string;
+          category?: string;
+          title: string;
+          summary?: string | null;
+          framework?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['legal_concepts']['Insert']>;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

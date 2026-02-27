@@ -1,12 +1,17 @@
-import { EssayTemplateView } from '@/components/template/essay-template-view';
-import { listEssayTemplates, type EssayTemplateRow } from '@/lib/supabase/queries';
+import { TemplateTabView } from '@/components/template/template-tab-view';
+import { listEssayTemplates, type EssayTemplateRow, listLegalConcepts, type LegalConceptRow } from '@/lib/supabase/queries';
 
 export default async function TemplatePage() {
   let templates: EssayTemplateRow[] = [];
+  let concepts: LegalConceptRow[] = [];
   try {
-    templates = await listEssayTemplates();
+    [templates, concepts] = await Promise.all([
+      listEssayTemplates(),
+      listLegalConcepts(),
+    ]);
   } catch {
     templates = [];
+    concepts = [];
   }
 
   return (
@@ -16,7 +21,7 @@ export default async function TemplatePage() {
         <p className='text-sub'>論点・訴訟要件ごとに自分の型を管理</p>
       </div>
 
-      <EssayTemplateView templates={templates} />
+      <TemplateTabView templates={templates} concepts={concepts} />
     </main>
   );
 }

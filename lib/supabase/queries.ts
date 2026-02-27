@@ -356,3 +356,97 @@ export const deleteEssayTemplate = async (id: string): Promise<void> => {
 
   if (error) throw error;
 };
+
+// ────────────── LEGAL CONCEPTS ──────────────
+
+export type LegalConceptRow = Database['public']['Tables']['legal_concepts']['Row'];
+
+export const listLegalConcepts = async (): Promise<LegalConceptRow[]> => {
+  const user = await getUserOrThrow();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('legal_concepts')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
+
+export const createLegalConcept = async (input: {
+  subject: string;
+  category?: string;
+  title: string;
+  summary?: string | null;
+  framework?: string | null;
+  notes?: string | null;
+}): Promise<LegalConceptRow> => {
+  const user = await getUserOrThrow();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('legal_concepts')
+    // @ts-expect-error - Supabase type inference issue with generic parameters
+    .insert({
+      user_id: user.id,
+      subject: input.subject,
+      category: input.category || 'その他',
+      title: input.title,
+      summary: input.summary || null,
+      framework: input.framework || null,
+      notes: input.notes || null,
+    })
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error('Failed to create legal concept');
+  }
+
+  return data;
+};
+
+export const updateLegalConcept = async (
+  id: string,
+  input: {
+    subject?: string;
+    category?: string;
+    title?: string;
+    summary?: string | null;
+    framework?: string | null;
+    notes?: string | null;
+  }
+): Promise<LegalConceptRow> => {
+  const user = await getUserOrThrow();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('legal_concepts')
+    // @ts-expect-error - Supabase type inference issue with generic parameters
+    .update(input)
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    throw error ?? new Error('Failed to update legal concept');
+  }
+
+  return data;
+};
+
+export const deleteLegalConcept = async (id: string): Promise<void> => {
+  const user = await getUserOrThrow();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('legal_concepts')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) throw error;
+};
