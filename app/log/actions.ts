@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { createStudySession, updateStudySession, deleteStudySession } from '@/lib/supabase/queries';
-import { logFormSchema, formatZodError } from '@/lib/validation';
+import { logFormSchema, formatZodError, uuidSchema } from '@/lib/validation';
 
 export type LogFormInput = {
   subject: string;
@@ -60,6 +60,12 @@ export async function createStudySessionAction(payload: LogFormInput) {
 }
 
 export async function updateStudySessionAction(id: string, payload: LogFormInput) {
+  // UUID 形式のバリデーション
+  const idValidation = uuidSchema.safeParse(id);
+  if (!idValidation.success) {
+    return { ok: false, message: 'Invalid ID format' };
+  }
+
   // Zod によるランタイムバリデーション
   const result = logFormSchema.safeParse(payload);
   if (!result.success) {
@@ -98,6 +104,12 @@ export async function updateStudySessionAction(id: string, payload: LogFormInput
 }
 
 export async function deleteStudySessionAction(id: string) {
+  // UUID 形式のバリデーション
+  const idValidation = uuidSchema.safeParse(id);
+  if (!idValidation.success) {
+    return { ok: false, message: 'Invalid ID format' };
+  }
+
   await deleteStudySession(id);
   revalidatePath('/');
   revalidatePath('/log');

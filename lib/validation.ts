@@ -30,6 +30,8 @@ export const trackSchema = z.enum(trackValues);
 
 export const activitySchema = z.enum(activityValues);
 
+export const uuidSchema = z.string().uuid('Invalid UUID format');
+
 // ── 学習ログ スキーマ ──
 
 export const logFormSchema = z.object({

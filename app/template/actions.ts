@@ -9,7 +9,7 @@ import {
   deleteLegalConcept,
   updateLegalConcept,
 } from '@/lib/supabase/queries';
-import { essayTemplateSchema, legalConceptSchema, formatZodError } from '@/lib/validation';
+import { essayTemplateSchema, legalConceptSchema, formatZodError, uuidSchema } from '@/lib/validation';
 import { sanitizeHtmlServer } from '@/lib/sanitize-server';
 
 export type EssayTemplateInput = {
@@ -44,6 +44,12 @@ export async function createEssayTemplateAction(payload: EssayTemplateInput) {
 }
 
 export async function updateEssayTemplateAction(id: string, payload: EssayTemplateInput) {
+  // UUID 形式のバリデーション
+  const idValidation = uuidSchema.safeParse(id);
+  if (!idValidation.success) {
+    return { ok: false, message: 'Invalid ID format' };
+  }
+
   // Zod によるランタイムバリデーション
   const result = essayTemplateSchema.safeParse(payload);
   if (!result.success) {
@@ -66,6 +72,12 @@ export async function updateEssayTemplateAction(id: string, payload: EssayTempla
 }
 
 export async function deleteEssayTemplateAction(id: string) {
+  // UUID 形式のバリデーション
+  const idValidation = uuidSchema.safeParse(id);
+  if (!idValidation.success) {
+    return { ok: false, message: 'Invalid ID format' };
+  }
+
   await deleteEssayTemplate(id);
   revalidatePath('/template');
   return { ok: true as const };
@@ -103,6 +115,12 @@ export async function createLegalConceptAction(payload: LegalConceptInput) {
 }
 
 export async function updateLegalConceptAction(id: string, payload: LegalConceptInput) {
+  // UUID 形式のバリデーション
+  const idValidation = uuidSchema.safeParse(id);
+  if (!idValidation.success) {
+    return { ok: false, message: 'Invalid ID format' };
+  }
+
   // Zod によるランタイムバリデーション
   const result = legalConceptSchema.safeParse(payload);
   if (!result.success) {
@@ -125,6 +143,12 @@ export async function updateLegalConceptAction(id: string, payload: LegalConcept
 }
 
 export async function deleteLegalConceptAction(id: string) {
+  // UUID 形式のバリデーション
+  const idValidation = uuidSchema.safeParse(id);
+  if (!idValidation.success) {
+    return { ok: false, message: 'Invalid ID format' };
+  }
+
   await deleteLegalConcept(id);
   revalidatePath('/template');
   return { ok: true as const };
