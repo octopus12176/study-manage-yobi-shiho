@@ -4,6 +4,7 @@ import { ArrowUpRight, Flame, Radar, Sparkles, TriangleAlert } from 'lucide-reac
 import { ConfDots } from '@/components/ui/confdots';
 import { MiniBar } from '@/components/ui/minibar';
 import { StudyHeatmap } from '@/components/dashboard/study-heatmap';
+import { TrackStatsSection } from '@/components/dashboard/track-stats-section';
 import type { DashboardData } from '@/lib/dashboard';
 
 type DashboardViewProps = {
@@ -376,6 +377,8 @@ export function DashboardView({ data }: DashboardViewProps) {
           )}
         </div>
       </div>
+
+      <TrackStatsSection data={data} />
 
       {data.recentSessions.length > 0 && (
         <div className='flex justify-end'>

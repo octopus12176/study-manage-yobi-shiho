@@ -28,6 +28,14 @@ type ActivityMix = {
   pct: number;
 };
 
+type TrackStats = {
+  subjectBreakdown: Record<string, number>;
+  weakPoints: Array<[string, number]>;
+  totalMinutes: number;
+  sessionCount: number;
+  causeCounts?: Array<{ category: string; count: number; pct: number }>;
+};
+
 export type DashboardData = {
   weekDates: string[];
   weekLabels: string[];
@@ -53,6 +61,10 @@ export type DashboardData = {
   isManualFocus: boolean;
   activityMix: ActivityMix[];
   ronbunCauseCounts: Array<{ category: string; count: number; pct: number }>;
+  trackStats: {
+    tantou: TrackStats;
+    ronbun: TrackStats;
+  };
 };
 
 const fallbackPlanRatios: WeeklyPlanRatios = {
@@ -257,6 +269,58 @@ export const getDashboardData = async (): Promise<DashboardData> => {
     const weakPoints = [...weakCounter.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
     const reviewPattern = [...reviewCounter.entries()].sort((a, b) => b[1] - a[1]);
 
+    // Calculate track-specific stats (last 90 days)
+    const ninetyDaysAgo = format(addDays(new Date(), -90), 'yyyy-MM-dd');
+    const trackStatsSessions = heatmapSessions.filter(
+      (session) => session.started_at.slice(0, 10) >= ninetyDaysAgo
+    );
+
+    const calculateTrackStats = (track: 'tantou' | 'ronbun'): TrackStats => {
+      const sessions = trackStatsSessions.filter((s) => s.track === track);
+      const totalMinutes = sessions.reduce((acc, cur) => acc + cur.duration_min, 0);
+
+      const subjectBreakdown = SUBJECTS.reduce<Record<string, number>>((acc, subject) => {
+        acc[subject] = 0;
+        return acc;
+      }, {});
+      sessions.forEach((session) => {
+        subjectBreakdown[session.subject] = (subjectBreakdown[session.subject] ?? 0) + session.duration_min;
+      });
+
+      const weakCounter = new Map<string, number>();
+      sessions
+        .filter((session) => (session.confidence ?? 3) <= 2)
+        .forEach((session) => {
+          weakCounter.set(session.subject, (weakCounter.get(session.subject) ?? 0) + 1);
+        });
+      const weakPoints = [...weakCounter.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+      const stats: TrackStats = {
+        subjectBreakdown,
+        weakPoints,
+        totalMinutes,
+        sessionCount: sessions.length,
+      };
+
+      if (track === 'ronbun') {
+        const causeCounter = new Map<string, number>();
+        sessions.forEach((session) => {
+          if (!session.cause_category) return;
+          causeCounter.set(session.cause_category, (causeCounter.get(session.cause_category) ?? 0) + 1);
+        });
+        const causeTotal = [...causeCounter.values()].reduce((acc, val) => acc + val, 0);
+        stats.causeCounts = [...causeCounter.entries()]
+          .map(([category, count]) => ({
+            category,
+            count,
+            pct: causeTotal > 0 ? Math.round((count / causeTotal) * 100) : 0,
+          }))
+          .sort((a, b) => b.count - a.count);
+      }
+
+      return stats;
+    };
+
     const todaySessions = weekSessions
       .filter((session) => session.started_at.startsWith(today))
       .sort((a, b) => parseISO(b.started_at).getTime() - parseISO(a.started_at).getTime());
@@ -294,11 +358,20 @@ export const getDashboardData = async (): Promise<DashboardData> => {
       isManualFocus: planRatios.focusedSubjectNames.length > 0,
       activityMix,
       ronbunCauseCounts,
+      trackStats: {
+        tantou: calculateTrackStats('tantou'),
+        ronbun: calculateTrackStats('ronbun'),
+      },
     };
   } catch {
     const weekDates = buildWeekDates();
     const heatmapDates = buildHeatmapRange().dates;
     const subjectBreakdown = SUBJECTS.reduce<Record<string, number>>((acc, subject) => {
+      acc[subject] = 0;
+      return acc;
+    }, {});
+
+    const emptySubjectBreakdown = SUBJECTS.reduce<Record<string, number>>((acc, subject) => {
       acc[subject] = 0;
       return acc;
     }, {});
@@ -341,6 +414,20 @@ export const getDashboardData = async (): Promise<DashboardData> => {
       isManualFocus: false,
       activityMix: [],
       ronbunCauseCounts: [],
+      trackStats: {
+        tantou: {
+          subjectBreakdown: emptySubjectBreakdown,
+          weakPoints: [],
+          totalMinutes: 0,
+          sessionCount: 0,
+        },
+        ronbun: {
+          subjectBreakdown: emptySubjectBreakdown,
+          weakPoints: [],
+          totalMinutes: 0,
+          sessionCount: 0,
+        },
+      },
     };
   }
 };
