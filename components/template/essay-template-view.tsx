@@ -13,6 +13,7 @@ import {
   updateEssayTemplateAction,
 } from '@/app/template/actions';
 import { SUBJECTS } from '@/lib/constants';
+import { sanitizeHtml } from '@/lib/sanitize';
 import type { EssayTemplateRow } from '@/lib/supabase/queries';
 
 type EssayTemplateViewProps = {
@@ -30,7 +31,7 @@ function renderContent(content: string | null): React.ReactNode {
     return (
       <div
         className='rich-text-content rounded bg-white p-3 border border-border'
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
       />
     );
   }
