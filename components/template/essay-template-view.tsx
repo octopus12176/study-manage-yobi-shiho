@@ -26,14 +26,14 @@ const RANKS = ['A', 'B', 'C'] as const;
 
 // 科目ごとの色マッピング
 const SUBJECT_COLOR_MAP: Record<string, string> = {
-  '憲法': 'text-accent',           // 現在の色のまま
-  '行政法': 'text-red-600',
-  '民法': 'text-blue-600',
-  '商法': 'text-amber-600',
-  '民訴法': 'text-green-600',
-  '刑法': 'text-purple-600',
-  '刑訴法': 'text-pink-600',
-  '実務基礎': 'text-teal-600',
+  憲法: 'text-accent', // 現在の色のまま
+  行政法: 'text-teal-600',
+  民法: 'text-blue-600',
+  商法: 'text-amber-600',
+  民訴法: 'text-green-600',
+  刑法: 'text-purple-600',
+  刑訴法: 'text-pink-600',
+  実務基礎: 'text-slate-600',
 };
 
 // 科目に応じた色クラスを取得
@@ -303,7 +303,9 @@ export function EssayTemplateView({
                   className='flex w-full items-center justify-between px-5 py-4 text-left'
                 >
                   <div className='flex items-center gap-3 flex-1'>
-                    <span className={`inline-flex rounded bg-accent/10 px-2.5 py-1 text-xs font-semibold ${getSubjectColorClass(template.subject)}`}>
+                    <span
+                      className={`inline-flex rounded bg-accent/10 px-2.5 py-1 text-xs font-semibold ${getSubjectColorClass(template.subject)}`}
+                    >
                       {template.subject}
                     </span>
                     <span
