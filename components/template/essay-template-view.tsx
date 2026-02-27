@@ -297,12 +297,12 @@ export function EssayTemplateView({
                 className='overflow-hidden rounded-lg border border-border bg-white transition-all hover:border-text hover:shadow-md'
               >
                 {/* ヘッダー（クリック可能） */}
-                <button
-                  type='button'
-                  onClick={() => handleToggleExpand(template.id)}
-                  className='flex w-full items-center justify-between px-5 py-4 text-left'
-                >
-                  <div className='flex items-center gap-3 flex-1'>
+                <div className='flex w-full items-center justify-between px-5 py-4'>
+                  <button
+                    type='button'
+                    onClick={() => handleToggleExpand(template.id)}
+                    className='flex items-center gap-3 flex-1 text-left'
+                  >
                     <span
                       className={`inline-flex rounded bg-accent/10 px-2.5 py-1 text-xs font-semibold ${getSubjectColorClass(template.subject)}`}
                     >
@@ -322,12 +322,31 @@ export function EssayTemplateView({
                     <span className='font-semibold text-text'>
                       {template.title}
                     </span>
+                    <ChevronDown
+                      size={20}
+                      className={`flex-shrink-0 transition-transform ml-auto ${isExpanded ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {/* 編集・削除ボタン */}
+                  <div className='flex items-center gap-2 flex-shrink-0 ml-2'>
+                    <Button
+                      type='button'
+                      variant='secondary'
+                      size='sm'
+                      onClick={() => handleOpenEditModal(template)}
+                    >
+                      <Pencil size={14} />
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => handleDeleteTemplate(template.id)}
+                    >
+                      削除
+                    </Button>
                   </div>
-                  <ChevronDown
-                    size={20}
-                    className={`flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                  />
-                </button>
+                </div>
 
                 {/* 展開部分 */}
                 {isExpanded && (
@@ -378,25 +397,6 @@ export function EssayTemplateView({
                         {renderContent(template.pitfall)}
                       </div>
                     )}
-
-                    {/* 編集・削除ボタン */}
-                    <div className='flex justify-end gap-2 pt-2'>
-                      <Button
-                        variant='secondary'
-                        size='sm'
-                        onClick={() => handleOpenEditModal(template)}
-                      >
-                        <Pencil size={14} />
-                        編集
-                      </Button>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => handleDeleteTemplate(template.id)}
-                      >
-                        削除
-                      </Button>
-                    </div>
                   </div>
                 )}
               </div>
