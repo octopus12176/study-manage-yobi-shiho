@@ -1,4 +1,4 @@
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
 
 /**
  * サーバーサイド（Node.js Server Actions）でTipTap生成HTMLをサニタイズ
@@ -12,8 +12,8 @@ export function sanitizeHtmlServer(html: string | null | undefined): string | nu
 
   // TipTapが使うタグ（b, i, u, strong, em, p, ul, ol, li等）を許可
   // スクリプト関連とイベントハンドラーは自動除去される
-  const clean = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: [
+  const clean = sanitizeHtml(html, {
+    allowedTags: [
       'p',
       'br',
       'strong',
@@ -32,8 +32,11 @@ export function sanitizeHtmlServer(html: string | null | undefined): string | nu
       'span',
       'div',
     ],
-    ALLOWED_ATTR: ['style', 'class'],
-    FORCE_BODY: false,
+    allowedAttributes: {
+      span: ['style', 'class'],
+      div: ['style', 'class'],
+      p: ['style', 'class'],
+    },
   });
 
   return clean || null;
