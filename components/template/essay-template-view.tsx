@@ -22,7 +22,7 @@ type EssayTemplateViewProps = {
 
 const ALL_SUBJECT = 'all';
 const ALL_RANK = 'all';
-const RANKS = ['S', 'A', 'B', 'C'] as const;
+const RANKS = ['A', 'B', 'C'] as const;
 
 // ヘルパー関数: HTMLか plain text かを判別して表示
 function renderContent(content: string | null): React.ReactNode {
@@ -291,13 +291,11 @@ export function EssayTemplateView({
                     </span>
                     <span
                       className={`inline-flex rounded px-2 py-0.5 text-xs font-bold ${
-                        template.rank === 'S'
-                          ? 'bg-purple-100 text-purple-700'
-                          : template.rank === 'A'
-                            ? 'bg-red-100 text-red-700'
-                            : template.rank === 'B'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-yellow-100 text-yellow-700'
+                        template.rank === 'A'
+                          ? 'bg-red-100 text-red-700'
+                          : template.rank === 'B'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-yellow-100 text-yellow-700'
                       }`}
                     >
                       {template.rank}
@@ -322,18 +320,15 @@ export function EssayTemplateView({
                       </span>
                       <span
                         className={`inline-flex rounded px-3 py-1 text-sm font-bold ${
-                          template.rank === 'S'
-                            ? 'bg-purple-100 text-purple-700'
-                            : template.rank === 'A'
-                              ? 'bg-red-100 text-red-700'
-                              : template.rank === 'B'
-                                ? 'bg-amber-100 text-amber-700'
-                                : 'bg-yellow-100 text-yellow-700'
+                          template.rank === 'A'
+                            ? 'bg-red-100 text-red-700'
+                            : template.rank === 'B'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-yellow-100 text-yellow-700'
                         }`}
                       >
-                        {template.rank === 'S' && 'S - 最重要'}
-                        {template.rank === 'A' && 'A - 重要'}
-                        {template.rank === 'B' && 'B - 普通'}
+                        {template.rank === 'A' && 'A - 最重要'}
+                        {template.rank === 'B' && 'B - 重要'}
                         {template.rank === 'C' && 'C - 補助的'}
                       </span>
                     </div>
@@ -448,9 +443,8 @@ export function EssayTemplateView({
                     }
                     className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20'
                   >
-                    <option value='S'>S - 最重要</option>
-                    <option value='A'>A - 重要</option>
-                    <option value='B'>B - 普通</option>
+                    <option value='A'>A - 最重要</option>
+                    <option value='B'>B - 重要</option>
                     <option value='C'>C - 補助的</option>
                   </select>
                 </div>
@@ -587,9 +581,8 @@ export function EssayTemplateView({
                     }
                     className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20'
                   >
-                    <option value='S'>S - 最重要</option>
-                    <option value='A'>A - 重要</option>
-                    <option value='B'>B - 普通</option>
+                    <option value='A'>A - 最重要</option>
+                    <option value='B'>B - 重要</option>
                     <option value='C'>C - 補助的</option>
                   </select>
                 </div>
