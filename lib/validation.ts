@@ -63,6 +63,13 @@ export const logFormSchema = z.object({
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, '日付の形式が正しくありません（yyyy-MM-dd）。')
+    .refine(
+      (val) => {
+        const d = new Date(val);
+        return !isNaN(d.getTime()) && d.toISOString().startsWith(val);
+      },
+      '存在する日付を入力してください。'
+    )
     .optional(),
   causeCategory: z
     .union([z.enum(causeValues), z.literal('')])
