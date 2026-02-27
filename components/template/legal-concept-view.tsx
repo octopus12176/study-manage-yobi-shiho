@@ -20,7 +20,14 @@ type LegalConceptViewProps = {
 };
 
 const ALL_SUBJECT = 'all';
-const CATEGORY_OPTIONS = ['判断枠組み', '要件事実', '訴訟要件', '基本原則', '審査基準', 'その他'] as const;
+const CATEGORY_OPTIONS = [
+  '判断枠組み',
+  '要件事実',
+  '訴訟要件',
+  '基本原則',
+  '審査基準',
+  'その他',
+] as const;
 
 // ヘルパー関数: HTMLか plain text かを判別して表示
 function renderContent(content: string | null): React.ReactNode {
@@ -41,11 +48,15 @@ function renderContent(content: string | null): React.ReactNode {
   );
 }
 
-export function LegalConceptView({ concepts: initialConcepts }: LegalConceptViewProps) {
+export function LegalConceptView({
+  concepts: initialConcepts,
+}: LegalConceptViewProps) {
   const [concepts, setConcepts] = useState(initialConcepts);
   const [filterSubject, setFilterSubject] = useState(ALL_SUBJECT);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set());
+  const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   // 追加モーダルのフォーム状態
   const [formData, setFormData] = useState<{
@@ -69,7 +80,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
 
   // 編集モーダル用 state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingConcept, setEditingConcept] = useState<LegalConceptRow | null>(null);
+  const [editingConcept, setEditingConcept] = useState<LegalConceptRow | null>(
+    null,
+  );
   const [editFormData, setEditFormData] = useState<{
     subject: string;
     category: string;
@@ -140,7 +153,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
         setSubmitError(result.message || 'エラーが発生しました。');
       }
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : '保存に失敗しました。');
+      setSubmitError(
+        error instanceof Error ? error.message : '保存に失敗しました。',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -173,14 +188,19 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
     setIsEditSubmitting(true);
 
     try {
-      const result = await updateLegalConceptAction(editingConcept.id, editFormData);
+      const result = await updateLegalConceptAction(
+        editingConcept.id,
+        editFormData,
+      );
       if (result.ok) {
         window.location.reload();
       } else {
         setEditSubmitError(result.message || 'エラーが発生しました。');
       }
     } catch (error) {
-      setEditSubmitError(error instanceof Error ? error.message : '更新に失敗しました。');
+      setEditSubmitError(
+        error instanceof Error ? error.message : '更新に失敗しました。',
+      );
     } finally {
       setIsEditSubmitting(false);
     }
@@ -204,7 +224,7 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
   return (
     <>
       {/* ボタンとフィルター */}
-      <div className='flex flex-col gap-4'>
+      <div className='flex flex-col  gap-4 mb-4'>
         <Button onClick={handleOpenModal} className='w-fit'>
           ＋ 基礎知識追加
         </Button>
@@ -254,7 +274,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                     <span className='inline-flex rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700'>
                       {concept.category}
                     </span>
-                    <span className='font-semibold text-text'>{concept.title}</span>
+                    <span className='font-semibold text-text'>
+                      {concept.title}
+                    </span>
                   </div>
                   <ChevronDown
                     size={20}
@@ -355,7 +377,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                   <select
                     id='subject'
                     value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, subject: e.target.value })
+                    }
                     className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20'
                   >
                     {SUBJECTS.map((subject) => (
@@ -371,7 +395,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                   <select
                     id='category'
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
                     className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20'
                   >
                     {CATEGORY_OPTIONS.map((cat) => (
@@ -389,7 +415,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                 <Input
                   id='title'
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   placeholder='例: 三段階審査論'
                   className='mt-2'
                 />
@@ -401,7 +429,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                 <textarea
                   id='summary'
                   value={formData.summary}
-                  onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, summary: e.target.value })
+                  }
                   placeholder='1〜2文で概要を説明'
                   className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 resize-none'
                   rows={2}
@@ -413,7 +443,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                 <Label htmlFor='framework'>型・フロー</Label>
                 <RichTextEditor
                   value={formData.framework}
-                  onChange={(html) => setFormData({ ...formData, framework: html })}
+                  onChange={(html) =>
+                    setFormData({ ...formData, framework: html })
+                  }
                   placeholder='①〜 → ②〜 → ③〜'
                   className='mt-2'
                   minHeight='96px'
@@ -481,7 +513,12 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                   <select
                     id='edit-subject'
                     value={editFormData.subject}
-                    onChange={(e) => setEditFormData({ ...editFormData, subject: e.target.value })}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        subject: e.target.value,
+                      })
+                    }
                     className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20'
                   >
                     {SUBJECTS.map((subject) => (
@@ -497,7 +534,12 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                   <select
                     id='edit-category'
                     value={editFormData.category}
-                    onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        category: e.target.value,
+                      })
+                    }
                     className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20'
                   >
                     {CATEGORY_OPTIONS.map((cat) => (
@@ -515,7 +557,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                 <Input
                   id='edit-title'
                   value={editFormData.title}
-                  onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, title: e.target.value })
+                  }
                   placeholder='例: 三段階審査論'
                   className='mt-2'
                 />
@@ -527,7 +571,12 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                 <textarea
                   id='edit-summary'
                   value={editFormData.summary}
-                  onChange={(e) => setEditFormData({ ...editFormData, summary: e.target.value })}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      summary: e.target.value,
+                    })
+                  }
                   placeholder='1〜2文で概要を説明'
                   className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 resize-none'
                   rows={2}
@@ -539,7 +588,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                 <Label htmlFor='edit-framework'>型・フロー</Label>
                 <RichTextEditor
                   value={editFormData.framework}
-                  onChange={(html) => setEditFormData({ ...editFormData, framework: html })}
+                  onChange={(html) =>
+                    setEditFormData({ ...editFormData, framework: html })
+                  }
                   placeholder='①〜 → ②〜 → ③〜'
                   className='mt-2'
                   minHeight='96px'
@@ -551,7 +602,9 @@ export function LegalConceptView({ concepts: initialConcepts }: LegalConceptView
                 <Label htmlFor='edit-notes'>注意点</Label>
                 <RichTextEditor
                   value={editFormData.notes}
-                  onChange={(html) => setEditFormData({ ...editFormData, notes: html })}
+                  onChange={(html) =>
+                    setEditFormData({ ...editFormData, notes: html })
+                  }
                   placeholder='試験での注意点・落とし穴'
                   className='mt-2'
                   minHeight='80px'

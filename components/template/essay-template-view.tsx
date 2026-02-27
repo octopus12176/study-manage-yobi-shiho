@@ -7,7 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Chip } from '@/components/ui/chip';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { createEssayTemplateAction, deleteEssayTemplateAction, updateEssayTemplateAction } from '@/app/template/actions';
+import {
+  createEssayTemplateAction,
+  deleteEssayTemplateAction,
+  updateEssayTemplateAction,
+} from '@/app/template/actions';
 import { SUBJECTS } from '@/lib/constants';
 import type { EssayTemplateRow } from '@/lib/supabase/queries';
 
@@ -38,11 +42,15 @@ function renderContent(content: string | null): React.ReactNode {
   );
 }
 
-export function EssayTemplateView({ templates: initialTemplates }: EssayTemplateViewProps) {
+export function EssayTemplateView({
+  templates: initialTemplates,
+}: EssayTemplateViewProps) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [filterSubject, setFilterSubject] = useState(ALL_SUBJECT);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(new Set());
+  const [expandedCardIds, setExpandedCardIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   // 追加モーダルのフォーム状態
   const [formData, setFormData] = useState<{
@@ -66,7 +74,8 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
 
   // 編集モーダル用 state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<EssayTemplateRow | null>(null);
+  const [editingTemplate, setEditingTemplate] =
+    useState<EssayTemplateRow | null>(null);
   const [editFormData, setEditFormData] = useState<{
     subject: string;
     title: string;
@@ -138,7 +147,9 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
         setSubmitError(result.message || 'エラーが発生しました。');
       }
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : '保存に失敗しました。');
+      setSubmitError(
+        error instanceof Error ? error.message : '保存に失敗しました。',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -171,14 +182,19 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
     setIsEditSubmitting(true);
 
     try {
-      const result = await updateEssayTemplateAction(editingTemplate.id, editFormData);
+      const result = await updateEssayTemplateAction(
+        editingTemplate.id,
+        editFormData,
+      );
       if (result.ok) {
         window.location.reload();
       } else {
         setEditSubmitError(result.message || 'エラーが発生しました。');
       }
     } catch (error) {
-      setEditSubmitError(error instanceof Error ? error.message : '更新に失敗しました。');
+      setEditSubmitError(
+        error instanceof Error ? error.message : '更新に失敗しました。',
+      );
     } finally {
       setIsEditSubmitting(false);
     }
@@ -202,7 +218,7 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
   return (
     <>
       {/* ボタンとフィルター */}
-      <div className='flex flex-col gap-4 mb-8'>
+      <div className='flex flex-col gap-4 mb-4'>
         <Button onClick={handleOpenModal} className='w-fit'>
           ＋ テンプレ追加
         </Button>
@@ -249,14 +265,20 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                     <span className='inline-flex rounded bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent'>
                       {template.subject}
                     </span>
-                    <span className={`inline-flex rounded px-2 py-0.5 text-xs font-bold ${
-                      template.rank === 'A' ? 'bg-red-100 text-red-700' :
-                      template.rank === 'B' ? 'bg-amber-100 text-amber-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
+                    <span
+                      className={`inline-flex rounded px-2 py-0.5 text-xs font-bold ${
+                        template.rank === 'A'
+                          ? 'bg-red-100 text-red-700'
+                          : template.rank === 'B'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                      }`}
+                    >
                       {template.rank}
                     </span>
-                    <span className='font-semibold text-text'>{template.title}</span>
+                    <span className='font-semibold text-text'>
+                      {template.title}
+                    </span>
                   </div>
                   <ChevronDown
                     size={20}
@@ -269,12 +291,18 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                   <div className='border-t border-border bg-bg px-5 py-4 space-y-4'>
                     {/* ランク表示 */}
                     <div className='flex items-center gap-2'>
-                      <span className='text-xs font-semibold uppercase tracking-wider text-sub'>ランク:</span>
-                      <span className={`inline-flex rounded px-3 py-1 text-sm font-bold ${
-                        template.rank === 'A' ? 'bg-red-100 text-red-700' :
-                        template.rank === 'B' ? 'bg-amber-100 text-amber-700' :
-                        'bg-yellow-100 text-yellow-700'
-                      }`}>
+                      <span className='text-xs font-semibold uppercase tracking-wider text-sub'>
+                        ランク:
+                      </span>
+                      <span
+                        className={`inline-flex rounded px-3 py-1 text-sm font-bold ${
+                          template.rank === 'A'
+                            ? 'bg-red-100 text-red-700'
+                            : template.rank === 'B'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                        }`}
+                      >
                         {template.rank === 'A' && 'A - 最重要'}
                         {template.rank === 'B' && 'B - 重要'}
                         {template.rank === 'C' && 'C - 補助的'}
@@ -340,7 +368,9 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
           <div className='w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto'>
             {/* モーダルヘッダー */}
             <div className='mb-6 flex items-center justify-between'>
-              <h2 className='text-lg font-bold text-text'>論文テンプレを追加</h2>
+              <h2 className='text-lg font-bold text-text'>
+                論文テンプレを追加
+              </h2>
               <button
                 type='button'
                 onClick={handleCloseModal}
@@ -415,7 +445,9 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                 <Label htmlFor='template'>論点テンプレ（要件・フロー）</Label>
                 <RichTextEditor
                   value={formData.template}
-                  onChange={(html) => setFormData({ ...formData, template: html })}
+                  onChange={(html) =>
+                    setFormData({ ...formData, template: html })
+                  }
                   placeholder='①〜であること\n②〜の要件を満たすこと'
                   className='mt-2'
                   minHeight='96px'
@@ -439,7 +471,9 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                 <Label htmlFor='pitfall'>落とし穴・注意点</Label>
                 <RichTextEditor
                   value={formData.pitfall}
-                  onChange={(html) => setFormData({ ...formData, pitfall: html })}
+                  onChange={(html) =>
+                    setFormData({ ...formData, pitfall: html })
+                  }
                   placeholder='試験でよく間違える点・例外etc.'
                   className='mt-2'
                   minHeight='64px'
@@ -456,10 +490,7 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                 >
                   キャンセル
                 </Button>
-                <Button
-                  type='submit'
-                  disabled={isSubmitting}
-                >
+                <Button type='submit' disabled={isSubmitting}>
                   {isSubmitting ? '保存中...' : '保存する'}
                 </Button>
               </div>
@@ -474,7 +505,9 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
           <div className='w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto'>
             {/* ヘッダー */}
             <div className='mb-6 flex items-center justify-between'>
-              <h2 className='text-lg font-bold text-text'>論文テンプレを編集</h2>
+              <h2 className='text-lg font-bold text-text'>
+                論文テンプレを編集
+              </h2>
               <button
                 type='button'
                 onClick={handleCloseEditModal}
@@ -499,7 +532,10 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                     id='edit-subject'
                     value={editFormData.subject}
                     onChange={(e) =>
-                      setEditFormData({ ...editFormData, subject: e.target.value })
+                      setEditFormData({
+                        ...editFormData,
+                        subject: e.target.value,
+                      })
                     }
                     className='mt-2 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20'
                   >
@@ -544,10 +580,14 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
 
               {/* 論点テンプレ */}
               <div>
-                <Label htmlFor='edit-template'>論点テンプレ（要件・フロー）</Label>
+                <Label htmlFor='edit-template'>
+                  論点テンプレ（要件・フロー）
+                </Label>
                 <RichTextEditor
                   value={editFormData.template}
-                  onChange={(html) => setEditFormData({ ...editFormData, template: html })}
+                  onChange={(html) =>
+                    setEditFormData({ ...editFormData, template: html })
+                  }
                   placeholder='①〜であること\n②〜の要件を満たすこと'
                   className='mt-2'
                   minHeight='96px'
@@ -559,7 +599,9 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                 <Label htmlFor='edit-norm'>自分の言葉での規範</Label>
                 <RichTextEditor
                   value={editFormData.norm}
-                  onChange={(html) => setEditFormData({ ...editFormData, norm: html })}
+                  onChange={(html) =>
+                    setEditFormData({ ...editFormData, norm: html })
+                  }
                   placeholder='自分の言葉で規範を書く（記憶・定着用）'
                   className='mt-2'
                   minHeight='80px'
@@ -571,7 +613,9 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                 <Label htmlFor='edit-pitfall'>落とし穴・注意点</Label>
                 <RichTextEditor
                   value={editFormData.pitfall}
-                  onChange={(html) => setEditFormData({ ...editFormData, pitfall: html })}
+                  onChange={(html) =>
+                    setEditFormData({ ...editFormData, pitfall: html })
+                  }
                   placeholder='試験でよく間違える点・例外etc.'
                   className='mt-2'
                   minHeight='64px'
@@ -588,10 +632,7 @@ export function EssayTemplateView({ templates: initialTemplates }: EssayTemplate
                 >
                   キャンセル
                 </Button>
-                <Button
-                  type='submit'
-                  disabled={isEditSubmitting}
-                >
+                <Button type='submit' disabled={isEditSubmitting}>
                   {isEditSubmitting ? '更新中...' : '更新する'}
                 </Button>
               </div>
