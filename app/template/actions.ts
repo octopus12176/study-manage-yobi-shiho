@@ -29,14 +29,21 @@ export async function createEssayTemplateAction(payload: EssayTemplateInput) {
   }
   const data = result.data;
 
-  await createEssayTemplate({
-    subject: data.subject,
-    title: data.title,
-    template: sanitizeHtmlServer(data.template) || null,
-    norm: sanitizeHtmlServer(data.norm) || null,
-    pitfall: sanitizeHtmlServer(data.pitfall) || null,
-    rank: data.rank,
-  });
+  try {
+    await createEssayTemplate({
+      subject: data.subject,
+      title: data.title,
+      template: sanitizeHtmlServer(data.template) || null,
+      norm: sanitizeHtmlServer(data.norm) || null,
+      pitfall: sanitizeHtmlServer(data.pitfall) || null,
+      rank: data.rank,
+    });
+  } catch (error) {
+    return {
+      ok: false as const,
+      message: '保存に失敗しました。もう一度お試しください。',
+    };
+  }
 
   revalidatePath('/template');
 
@@ -57,14 +64,21 @@ export async function updateEssayTemplateAction(id: string, payload: EssayTempla
   }
   const data = result.data;
 
-  await updateEssayTemplate(id, {
-    subject: data.subject,
-    title: data.title,
-    template: sanitizeHtmlServer(data.template) || null,
-    norm: sanitizeHtmlServer(data.norm) || null,
-    pitfall: sanitizeHtmlServer(data.pitfall) || null,
-    rank: data.rank,
-  });
+  try {
+    await updateEssayTemplate(id, {
+      subject: data.subject,
+      title: data.title,
+      template: sanitizeHtmlServer(data.template) || null,
+      norm: sanitizeHtmlServer(data.norm) || null,
+      pitfall: sanitizeHtmlServer(data.pitfall) || null,
+      rank: data.rank,
+    });
+  } catch (error) {
+    return {
+      ok: false as const,
+      message: '更新に失敗しました。もう一度お試しください。',
+    };
+  }
 
   revalidatePath('/template');
 
@@ -78,7 +92,15 @@ export async function deleteEssayTemplateAction(id: string) {
     return { ok: false, message: 'Invalid ID format' };
   }
 
-  await deleteEssayTemplate(id);
+  try {
+    await deleteEssayTemplate(id);
+  } catch (error) {
+    return {
+      ok: false as const,
+      message: '削除に失敗しました。もう一度お試しください。',
+    };
+  }
+
   revalidatePath('/template');
   return { ok: true as const };
 }
@@ -100,14 +122,21 @@ export async function createLegalConceptAction(payload: LegalConceptInput) {
   }
   const data = result.data;
 
-  await createLegalConcept({
-    subject: data.subject,
-    category: data.category,
-    title: data.title,
-    summary: sanitizeHtmlServer(data.summary) || null,
-    framework: sanitizeHtmlServer(data.framework) || null,
-    notes: sanitizeHtmlServer(data.notes) || null,
-  });
+  try {
+    await createLegalConcept({
+      subject: data.subject,
+      category: data.category,
+      title: data.title,
+      summary: sanitizeHtmlServer(data.summary) || null,
+      framework: sanitizeHtmlServer(data.framework) || null,
+      notes: sanitizeHtmlServer(data.notes) || null,
+    });
+  } catch (error) {
+    return {
+      ok: false as const,
+      message: '保存に失敗しました。もう一度お試しください。',
+    };
+  }
 
   revalidatePath('/template');
 
@@ -128,14 +157,21 @@ export async function updateLegalConceptAction(id: string, payload: LegalConcept
   }
   const data = result.data;
 
-  await updateLegalConcept(id, {
-    subject: data.subject,
-    category: data.category,
-    title: data.title,
-    summary: sanitizeHtmlServer(data.summary) || null,
-    framework: sanitizeHtmlServer(data.framework) || null,
-    notes: sanitizeHtmlServer(data.notes) || null,
-  });
+  try {
+    await updateLegalConcept(id, {
+      subject: data.subject,
+      category: data.category,
+      title: data.title,
+      summary: sanitizeHtmlServer(data.summary) || null,
+      framework: sanitizeHtmlServer(data.framework) || null,
+      notes: sanitizeHtmlServer(data.notes) || null,
+    });
+  } catch (error) {
+    return {
+      ok: false as const,
+      message: '更新に失敗しました。もう一度お試しください。',
+    };
+  }
 
   revalidatePath('/template');
 
@@ -149,7 +185,15 @@ export async function deleteLegalConceptAction(id: string) {
     return { ok: false, message: 'Invalid ID format' };
   }
 
-  await deleteLegalConcept(id);
+  try {
+    await deleteLegalConcept(id);
+  } catch (error) {
+    return {
+      ok: false as const,
+      message: '削除に失敗しました。もう一度お試しください。',
+    };
+  }
+
   revalidatePath('/template');
   return { ok: true as const };
 }

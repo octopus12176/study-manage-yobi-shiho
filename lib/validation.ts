@@ -163,7 +163,7 @@ export const essayTemplateSchema = z.object({
     .optional()
     .default(''),
   rank: z
-    .enum(['S', 'A', 'B', 'C'] as const)
+    .enum(['A', 'B', 'C'] as const)
     .optional()
     .default('C'),
 });
