@@ -1,17 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { isEmailWhitelisted } from '@/lib/auth/whitelist';
-import { createClient } from '@/lib/supabase/client';
+import { signInAction, signUpAction } from './actions';
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,16 +21,10 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMessage('');
 
-    if (!isEmailWhitelisted(email)) {
-      setErrorMessage('このメールアドレスはログインが許可されていません。');
-      setLoading(false);
-      return;
-    }
+    const result = await signInAction(email, password);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setErrorMessage(error.message);
+    if ('error' in result) {
+      setErrorMessage(result.error);
       setLoading(false);
       return;
     }
@@ -45,16 +37,10 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMessage('');
 
-    if (!isEmailWhitelisted(email)) {
-      setErrorMessage('このメールアドレスはログインが許可されていません。');
-      setLoading(false);
-      return;
-    }
+    const result = await signUpAction(email, password);
 
-    const { error } = await supabase.auth.signUp({ email, password });
-
-    if (error) {
-      setErrorMessage(error.message);
+    if ('error' in result) {
+      setErrorMessage(result.error);
       setLoading(false);
       return;
     }
